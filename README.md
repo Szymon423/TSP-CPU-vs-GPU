@@ -113,11 +113,11 @@ Na początek zrobimy to ręcznie:
   
 <div align="center">
 <table>
-  <tr> <td>1</td> <td>2</td> <td>3</td> <td>4</td> </tr>
-  <tr> <td>1</td> <td>2</td> <td>4</td> <td>3</td> </tr>
-  <tr> <td>1</td> <td>3</td> <td>2</td> <td>4</td> </tr>
-  <tr> <td>1</td> <td>3</td> <td>4</td> <td>3</td> </tr>
-  <tr> <td>1</td> <td>4</td> <td>2</td> <td>3</td> </tr>
+  <tr> <td>Zbiór początkowy</td> <td>1</td> <td>2</td> <td>3</td> <td>4</td> </tr>
+  <tr> <td>Permutacja 1</td> <td>1</td> <td>2</td> <td>4</td> <td>3</td> </tr>
+  <tr> <td>Permutacja 2</td> <td>1</td> <td>3</td> <td>2</td> <td>4</td> </tr>
+  <tr> <td>Permutacja 3</td> <td>1</td> <td>3</td> <td>4</td> <td>3</td> </tr>
+  <tr> <td>Permutacja 4</td> <td>1</td> <td>4</td> <td>2</td> <td>3</td> </tr>
 </table>
 </div>
 
@@ -152,6 +152,12 @@ Pierwsza liczba w ciągu silniowym to 0, oznacza to, że jako pierwszą cyfrę d
 <p align="center">
     <img width="700" src="https://user-images.githubusercontent.com/96399051/204927376-e64af8b1-f0ea-43e4-b918-132c75ee2723.png">
 </p>
+
+Jak widać, uzyskana permutacja jest dokładnie taka sama jak ręcznie wyznaczona wcześniej.
+  
+## Obliczenia równoległe
+  
+Mogąc obliczać punkty startowe dla każdego z wątków oraz potrafiąc generować kolejne permutacje możliwe staje się zrównoleglenie obliczeń dla wszystkich możliwych permutacji. Zobaczymy co z tego wyjdzie...
   
 
 
