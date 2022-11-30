@@ -122,3 +122,36 @@ Na początek zrobimy to ręcznie:
 </div>
 
 Zapiszmy teraz numer permutacji którą chcemy uzyskać w reprezentacji silniowej.
+<p align="center">
+    <img width="350" src="https://user-images.githubusercontent.com/96399051/204923629-fed2c10c-3923-4da0-83cd-afe7c4d6290a.png">
+</p>
+
+Wiemy teraz, że reprezentacja silniowa liczby 4 wynosi:
+<div align="center">
+<table>
+  <tr> <td>2</td> <td>0</td> <td>0</td> </tr>
+</table>
+</div>
+  
+Ten ciąg liczb jest bardzo ważny. Musimy jednak go zmodyfikować ponieważ każda z cyfr w tym ciągu odnosi się do cyfry w permutacji początkowej, w której mamy 4 cyfry, tak więc, żeby nasz ciąg miał 4 cyfry, dopisujemy z jego lewej strony zera, tak by dopełnić do odpowiedniej liczby cyfr. Tak więc docelowy ciąg będzie w postaci:
+<div align="center">
+<table>
+  <tr> <td>0</td> <td>2</td> <td>0</td> <td>0</td> </tr>
+</table>
+</div>
+
+Na tej podstawie możemy obliczyć jakie elementy należy poddać permutacji. Zabawa polega na tym, że iterujemy się przez poszczególne cyfry powyższego ciągu od lewej do prawej. Każda kolejna cyfra oznacza jaką liczbę ze zbioru cyfr wchodzących w skład permutacji początkowej ułożonej leksykograficznie:
+<div align="center">
+<table>
+  <tr> <td>liczba</td> <td>1</td> <td>2</td> <td>3</td> <td>4</td> </tr>
+  <tr> <td>indeks</td> <td>0</td> <td>1</td> <td>2</td> <td>3</td> </tr>
+</table>
+</div>
+
+Pierwsza liczba w ciągu silniowym to 0, oznacza to, że jako pierwszą cyfrę do docelowej permutacji należy wybrać element na zerowej pozycji z początkowego zbioru liczb. Będzie to 1. Następnie ze zbioru dostępnych elementów usuwamy jedynkę oraz aktualizujemy indeksy. Kolejna cyfra to 2. Oznacza to, że na drugiej pozycji w docelowej permutacji znajdzie się liczba o indeksie 2 ze zbioru dostępnych elementów - jest nią 4. Realizujemy ten algorytm dla pozostałych elementów, tak jak pokazano na poniższym rysunku:
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204927376-e64af8b1-f0ea-43e4-b918-132c75ee2723.png">
+</p>
+  
+
+
