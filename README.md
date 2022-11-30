@@ -17,7 +17,7 @@ Wkłaśnie dwa ostatnie słowa to według mnie klucz do obliczeń równoległych
 ### Kolejność leksykograficzna
 Jeśli będziemy generować wszystkie możliwe permutacje w takiej właśnie kolejności zaczynając od najmniejszej oraz najbardziej intuicyjnej permutacji początkowej, którą będzie {1, 2, 3, ..., n}, wówczas mamy pewność, że wygenerujemy wszystkie możliwe permutacje realizując je po kolei aż do ostatniej, którą jest inwersja permutacji początkowej: {n, n-1, n-2, ..., 1}.
 
-### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
+#### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
 
 Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z wszystkich możliwych następnych permutacji. Przykład dla 3 elementów, 3! = 6. 
 <div align="center">
@@ -35,3 +35,6 @@ Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po pros
 </div>
 
 Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https://www.youtube.com/watch?v=6qXO72FkqwM">tym filmiku na YT</a> ale postaram się wyjaśnić to też tutaj.
+
+#### Wyznaczanie kolejności leksykograficznej
+  
