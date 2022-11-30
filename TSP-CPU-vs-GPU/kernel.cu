@@ -97,41 +97,41 @@ __global__ void Permute(char* arrDest, long long* offset, long long* Max)
 	}
 
 }
-
-int main()
-{
-	long long Max = 0;
-
-	// obliczenie ilości dostępnych możliwości n!
-	if (MAX_PERM == 0)
-		Max = Fact(NUMBER_OF_ELEMENTS);
-	else
-		Max = MAX_PERM;
-
-	long long offset = OFFSET;
-	char* arrDest = new char[Max * NUMBER_OF_ELEMENTS];
-
-	// Add vectors in parallel.
-	cudaError_t cudaStatus = PermuteWithCuda(arrDest, &offset, &Max);
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "PermuteWithCuda failed!");
-		return 1;
-	}
-	check(arrDest, Max);
-	display(arrDest, Max);
-
-	printf("\nExecuted program successfully.\n");
-
-	// cudaDeviceReset must be called before exiting in order for profiling and
-	// tracing tools such as Parallel Nsight and Visual Profiler to show complete traces.
-	cudaStatus = cudaDeviceReset();
-	if (cudaStatus != cudaSuccess) {
-		fprintf(stderr, "cudaDeviceReset failed!");
-		return 1;
-	}
-	delete[] arrDest;
-	return 0;
-}
+//
+//int main()
+//{
+//	long long Max = 0;
+//
+//	// obliczenie ilości dostępnych możliwości n!
+//	if (MAX_PERM == 0)
+//		Max = Fact(NUMBER_OF_ELEMENTS);
+//	else
+//		Max = MAX_PERM;
+//
+//	long long offset = OFFSET;
+//	char* arrDest = new char[Max * NUMBER_OF_ELEMENTS];
+//
+//	// Add vectors in parallel.
+//	cudaError_t cudaStatus = PermuteWithCuda(arrDest, &offset, &Max);
+//	if (cudaStatus != cudaSuccess) {
+//		fprintf(stderr, "PermuteWithCuda failed!");
+//		return 1;
+//	}
+//	check(arrDest, Max);
+//	display(arrDest, Max);
+//
+//	printf("\nExecuted program successfully.\n");
+//
+//	// cudaDeviceReset must be called before exiting in order for profiling and
+//	// tracing tools such as Parallel Nsight and Visual Profiler to show complete traces.
+//	cudaStatus = cudaDeviceReset();
+//	if (cudaStatus != cudaSuccess) {
+//		fprintf(stderr, "cudaDeviceReset failed!");
+//		return 1;
+//	}
+//	delete[] arrDest;
+//	return 0;
+//}
 
 cudaError_t PermuteWithCuda(char* arrDest, long long* offset, long long* Max)
 {

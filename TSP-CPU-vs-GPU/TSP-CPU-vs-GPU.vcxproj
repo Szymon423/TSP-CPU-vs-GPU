@@ -78,6 +78,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="permutate.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="code.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="permutate.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
