@@ -60,3 +60,10 @@ Nie jest to jednak ostateczny układ liczb, oznaczający końcową permutację. 
 </p>
 
 Uzyskana w ten sposób tablica będzie najmniejszą z wszystkich możliwych kolejnych permutacji tablicy początkowej. Należy jednak dodatkowo rozpatrzyć jeden przypadek, w którym algorytm działa inaczej - pokazano go na poniższej tablicy.
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204882807-776e3a7a-1a2e-4c46-a3e2-53f6329b6865.png">
+</p>  
+Jak widać na powyższym rysunku, znaleziony został pierwszy wierzchołek (maksimum lokalne) oraz znajduje się on pod indeksem i = 3. Zamieniając kolejnością elementy i = 3 oraz i = 2, oraz sortując elementy dla i > 2, nie uzyskalibyśmy kolejnej permutacji w kolejności leksykograficznej. 
+  
+Jest to spowodowane przez fakt, że na prawo od wierzchołka znajdują się liczby, które są mniejsze od samego wierzchołka ale są również większe od elementu o indeksie i = 2. W takim przypadku należy wybrać najmniejszy z elementów znajdujących się na prawo od miejsca w którym chcemy dokonać zmian - w tym przypadku indeks i = 2. 
+
