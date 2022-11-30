@@ -38,3 +38,8 @@ Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https
 
 #### Wyznaczanie kolejności leksykograficznej
   
+Wyznaczmy następną permutację dla n = 7 elementowej tablicy: {3, 2, 6, 7, 5, 4, 1}.
+Indeksując kazdy element od 0 do n-1, możemy przedstawić tę tablicę za pomocą prostego wykresu:
+  
+
+  
