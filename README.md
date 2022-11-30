@@ -41,18 +41,22 @@ Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https
 Wyznaczmy następną permutację dla n = 7 elementowej tablicy: {3, 2, 6, 7, 5, 4, 1}.
 Indeksując kazdy element od 0 do n-1, możemy przedstawić tę tablicę za pomocą prostego wykresu:
 <p align="center">
-    <img width="700" src="https://user-images.githubusercontent.com/96399051/204843925-3fd96543-2b81-4008-be2c-1e69c3997b7e.png">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204880214-34f5ae3b-4f54-4092-bc07-e7654744fe97.png">
 </p>
 
 Następnym krokiem jest znalezienie wierzchołka - patrząc z prawej strony. W kodzie wykonane zostanie to przez iterowanie się od końca tablicy do początku - sprawdzając przy tym czy aktualny element jest mniejszy od poprzedniego.
 <p align="center">
-    <img width="700" src="https://user-images.githubusercontent.com/96399051/204844616-d38ea048-51da-437b-b719-d0e178fda7fb.png">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204880283-f61e3987-2b03-473f-8efa-696a38244d11.png">
 </p>
 
-W tym przypadku jest to element o indeksie i = 3, został oznaczony na żółto. W celu wyznaczenia kolejnej permutacji musimy zamienić miejscami wyznaczony właśnie element z poprzednim (o indeksie i-1). Uzyskana wówczas tablica jest następująca:
+W tym przypadku jest to element o indeksie i = 3, został oznaczony na czerwono. W celu wyznaczenia kolejnej permutacji musimy zamienić miejscami wyznaczony właśnie element z poprzednim (o indeksie i - 1 = 2). Uzyskana wówczas tablica jest następująca:
 <p align="center">
-    <img width="700" src="https://user-images.githubusercontent.com/96399051/204845529-9e2a6247-e20d-47f8-aa35-9c2eddd8df21.png">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204880342-f13e1f36-ed44-4215-b275-454d29927dc9.png">
 </p>
 
-Nie jest to jednak ostateczny układ liczb, oznaczający końcową permutację. Aby ją uzyskać musimy posortować rosnąco zaznaczone poniżej elementy.
+Nie jest to jednak ostateczny układ liczb, oznaczający końcową permutację. Aby ją uzyskać musimy posortować rosnąco wszystkie elementy znajdujące się na prawo od nowego miejsca w którym znajduje się wierzchołek (bez niego samego). Zostało to przedstawione poniżej - wierzchołki oznaczone na niebiesko.
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204880976-cfa160f1-47a5-47ba-acc7-711018741f37.png">
+</p>
 
+Uzyskana w ten sposób tablica będzie najmniejszą z wszystkich możliwych kolejnych permutacji tablicy początkowej. Należy jednak dodatkowo rozpatrzyć jeden przypadek, w którym algorytm działa inaczej - pokazano go na poniższej tablicy.
