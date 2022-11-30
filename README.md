@@ -74,3 +74,51 @@ Kolejnym krokiem tak jak poprzednio jest posortowanie poszczególnych elementów
     <img width="700" src="https://user-images.githubusercontent.com/96399051/204915678-480d8a46-c81e-405a-94b4-7ded8f4bf117.png">
 </p>
 W ten sposób możemy uzyskać kolejną permutację dla dowolnego przypadku - ograniczeniem jest brak możliwości występowania elementów o jednakowej wartości pod różnymi adresami. W TSP jednak nie występuje taka zależność.
+  
+## Wyznaczanie i-tej permutacji
+Aby móc równolegle obliczać kolejne permutacje potrzebujemy znać zbiór permutacji początkowych, od których poszczególne wątki będą przeprowadzać obliczenia związane z wyznaczeniem kolejnych permutacji.
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/204917619-1807a01b-0ced-4703-9b83-02ab8098e2a3.png">
+</p>
+Powyższa grafika przedstawia przestrzeń do wyznaczenia wszystkich iteracji dla zbioru składającego się z 4 elementów. Wszystkich permutacji jest 4! = 24. Chcąc realizować te peramutacje równolegle korzystając z uprzednio przedstawionego algorytmu musimy poznać pierwszą permutację dla każdego podzbioru permutacji - zostały one rozróżnione kolorami. Elementy o indeksach i = 0, 6, 12, 18 są pierwszymi w każdym podzbiorze. Musimy więc wyznaczyć permutacje początkowe dla tych elementów.
+  
+Korzystając z tego, że wyznaczamy permutacje w kolejności leksykograficznej możemy obliczać jaka będzie i-ta permutacja za pomocą sprytnego algorytmu opartego na silniowym systemie pozycyjnym (Factorial number system)
+  
+### Factorial number system
+Zeby zrozumieć o co chodzi chcę przywołać analogię do systemu dziesiętnego. W systemie dziesiętnym liczby zapisywane są za pomocą ciągu cyfr, gdzie docelowa wartość liczby stworzonej przez ten ciąg jest liczona na bazie dziesiętnej:
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204919697-e17cbef9-447d-4314-9ab7-90da436b5ebf.png">
+</p>
+
+W przypadku systemu silniowego bazą zapisu jest silnia. Liczbę z systemu dziesiętnego możemy przenieść do systemu silniowego realizując operację rozkładu za pomocą dzielenia z resztą. Dla przykładu rozważmy znów 123:
+<p align="center">
+    <img width="350" src="https://user-images.githubusercontent.com/96399051/204921271-e0923c85-2c2c-4fa0-b1fc-b12d09e9a266.png">
+</p>
+Wykonane operacje:
+  
+1. W pierwszym kroku dzielimy liczbę 123 przez 1, efektem tego jest liczba 123 oraz 0 reszty,
+2. Następnie dzielimy wyżej uzyskany rezultat przez kolejną liczbę jaką jest 2 - uzyskujemy 61 całości oraz 1 reszty,
+3. Liczbę 61 dzielimy przez kolejny dzielnik jakim jest 3 co daje 20 całości i 1 reszty,
+4. Liczbę 20 dzielimy przez 4 co daje 5 całości i 0 reszty,
+5. Liczbę 5 dzielimy przez 5 co daje 1 całości i 0 reszty,
+6. Liczbę 1 dzielimy przez 6 co daje 0 całości i 1 reszty.
+  
+W powyższym zestawie operacji istotny jest zapis reszty. Reprezentacją liczby 123 (system dziesiętny) w systemie silniowym jest ciąg 1:0:0:1:1:0!
+  
+### Co to ma wspólnego z i-tą permutacją?
+  
+To jest ciekawe ponieważ, chcąc wyznaczyć i-tą permutację na zbiorze n elementów ułożonych w kolejności leksykograficznej w początkowej permutacji np: dla n = 4   :   1, 2, 3, 4 możemy obliczyć reprezentację silniową liczby która określa numer permutacji, który chcemy uzyskać. Obliczmy np 4 permutację na powyższym zbiorze. 
+
+Na początek zrobimy to ręcznie:
+  
+<div align="center">
+<table>
+  <tr> <td>1</td> <td>2</td> <td>3</td> <td>4</td> </tr>
+  <tr> <td>1</td> <td>2</td> <td>4</td> <td>3</td> </tr>
+  <tr> <td>1</td> <td>3</td> <td>2</td> <td>4</td> </tr>
+  <tr> <td>1</td> <td>3</td> <td>4</td> <td>3</td> </tr>
+  <tr> <td>1</td> <td>4</td> <td>2</td> <td>3</td> </tr>
+</table>
+</div>
+
+Zapiszmy teraz numer permutacji którą chcemy uzyskać w reprezentacji silniowej.
