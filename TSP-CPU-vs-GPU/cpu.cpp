@@ -98,11 +98,40 @@ void next_permutation(int n, int current_permutation[]) {
     printf("\n");
 }
 
+void find_ith_permutation(int arr[], int n, int i) {
+    
+    int *factoradic = new int(n);
+    int rest = i;
+    for (int j = 1; j <= n; j++) {
+        factoradic[n-j] = rest % j;
+        rest /= j;
+    }
+    
+    int *permutation_arr = new int(n);
+    int _n = n - 1;
+    for (int j = 0; j < n; j++) {
+        permutation_arr[j] = arr[factoradic[j]];
+        
+        for (int k = 0; k < (_n - factoradic[j]); k++) {
+            swap(arr[factoradic[j] + k], arr[factoradic[j] + k + 1]);
+        }
+        _n--;
+    }
+    
+    
+    for (int o = 0; o < n; o++) {
+        printf("%d\t", permutation_arr[o]);
+    }
+    printf("\n");
+    
+    return;
+}
+
 
 
 int main()
 {
-    const int n = 5;
+    const int n = 6;
     int solutions_number = factorial(n) - 1;
    
     int first_permutation[] = {5, 4, 3, 2, 1};
@@ -112,9 +141,11 @@ int main()
     }
     printf("\n");
     
-    for (int o = 0; o < solutions_number; o++) {
-        next_permutation(n, first_permutation);    
-    }
+    // for (int o = 0; o < solutions_number; o++) {
+    //     next_permutation(n, first_permutation);    
+    // }
+    int excel_row = 98;
+    find_ith_permutation(first_permutation, n, excel_row-2);
     
     
     
