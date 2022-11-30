@@ -14,10 +14,10 @@ Staram się też jednak samemu napisać od podstaw taki algorytm, który zadzia�
 
 Wkłaśnie dwa ostatnie słowa to według mnie klucz do obliczeń równoległych.
 
-### Kolejność leksykograficzna
+## Kolejność leksykograficzna
 Jeśli będziemy generować wszystkie możliwe permutacje w takiej właśnie kolejności zaczynając od najmniejszej oraz najbardziej intuicyjnej permutacji początkowej, którą będzie {1, 2, 3, ..., n}, wówczas mamy pewność, że wygenerujemy wszystkie możliwe permutacje realizując je po kolei aż do ostatniej, którą jest inwersja permutacji początkowej: {n, n-1, n-2, ..., 1}.
 
-#### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
+### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
 
 Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z wszystkich możliwych następnych permutacji. Przykład dla 3 elementów, 3! = 6. 
 <div align="center">
@@ -36,7 +36,7 @@ Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po pros
 
 Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https://www.youtube.com/watch?v=6qXO72FkqwM">tym filmiku na YT</a> ale postaram się wyjaśnić to też tutaj.
 
-#### Wyznaczanie kolejności leksykograficznej
+### Wyznaczanie kolejności leksykograficznej
   
 Wyznaczmy następną permutację dla n = 7 elementowej tablicy: {3, 2, 6, 7, 5, 4, 1}.
 Indeksując kazdy element od 0 do n-1, możemy przedstawić tę tablicę za pomocą prostego wykresu:
@@ -65,6 +65,12 @@ Uzyskana w ten sposób tablica będzie najmniejszą z wszystkich możliwych kole
 </p>  
 Jak widać na powyższym rysunku, znaleziony został pierwszy wierzchołek (maksimum lokalne) oraz znajduje się on pod indeksem i = 3. Zamieniając kolejnością elementy i = 3 oraz i = 2, oraz sortując elementy dla i > 2, nie uzyskalibyśmy kolejnej permutacji w kolejności leksykograficznej. 
   
-Jest to spowodowane przez fakt, że na prawo od wierzchołka znajdują się liczby, które są mniejsze od samego wierzchołka ale są również większe od elementu o indeksie i = 2. W takim przypadku należy wybrać najmniejszy z elementów znajdujących się na prawo od miejsca w którym chcemy dokonać zmian - w tym przypadku indeks i = 2. 
-
-
+Jest to spowodowane przez fakt, że na prawo od wierzchołka znajdują się liczby, które są mniejsze od samego wierzchołka i są również większe od elementu o indeksie i = 2. W takim przypadku należy wybrać najmniejszy z elementów znajdujących się na prawo od miejsca w którym chcemy dokonać zmian (indeks i = 2). W tym przypadku najmniejszy z dostępnych elementów znajduje się pod indeksem i = 5. Tak więc następuje zamiana elementów o indeksach i = 2 oraz i = 5 tak jak pokazano na poniższym rysunku.
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204915369-ff3bc994-efc6-481d-b688-087433ae5616.png">
+</p>  
+Kolejnym krokiem tak jak poprzednio jest posortowanie poszczególnych elementów - w tym przypadku dla indeksów i > 2. Zostało to przedstawione poniżej.
+<p align="center">
+    <img width="700" src="https://user-images.githubusercontent.com/96399051/204915678-480d8a46-c81e-405a-94b4-7ded8f4bf117.png">
+</p>
+W ten sposób możemy uzyskać kolejną permutację dla dowolnego przypadku - ograniczeniem jest brak możliwości występowania elementów o jednakowej wartości pod różnymi adresami. W TSP jednak nie występuje taka zależność.
