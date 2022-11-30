@@ -19,29 +19,19 @@ Jeśli będziemy generować wszystkie możliwe permutacje w takiej właśnie kol
 
 ### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
 
-Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z większych od poprzedniej. Przykład dla 3 elementów, 3! = 6. 
-<p align="center">
-  <table style="margin: auto;">
-	<tr>
-		<td>Komórka1</td>
-		<td>Komórka2</td>
-		<td>Komórka3</td>
-	</tr>
-	<tr>
-		<td>Komórka4</td>
-		<td>Komórka5</td>
-		<td>Komórka6</td>
-	</tr>
+Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z wszystkich możliwych następnych permutacji. Przykład dla 3 elementów, 3! = 6. 
+<div align="center">
+<table>
+  <tr>
+    <td>i</td> <td>arr[0]</td> <td>arr[1]</td> <td>arr[2]</td>
+  </tr>
+  <tr> <td>1</td> <td>1</td> <td>2</td> <td>3</td> </tr>
+  <tr> <td>2</td> <td>1</td> <td>3</td> <td>2</td> </tr>
+  <tr> <td>3</td> <td>2</td> <td>1</td> <td>3</td> </tr>
+  <tr> <td>4</td> <td>2</td> <td>3</td> <td>1</td> </tr>
+  <tr> <td>5</td> <td>3</td> <td>1</td> <td>2</td> </tr>
+  <tr> <td>6</td> <td>3</td> <td>2</td> <td>1</td> </tr>
 </table>
-</p>
+</div>
 
-
-
-1 2 3
-1 3 2
-2 1 3
-2 3 1
-3 1 2
-3 2 1
-
-znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https://www.youtube.com/watch?v=6qXO72FkqwM">tym filmiku na YT</a>.
+Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https://www.youtube.com/watch?v=6qXO72FkqwM">tym filmiku na YT</a> ale postaram się wyjaśnić to też tutaj.
