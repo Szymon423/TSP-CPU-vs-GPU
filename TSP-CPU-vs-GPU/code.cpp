@@ -107,8 +107,8 @@ void next_permutation(int n, int current_permutation[]) {
         }
     }
 
-    for (int i = 0; i < n; i++) printf("%d\t", current_permutation[i]);
-    printf("\n");
+    /*for (int i = 0; i < n; i++) printf("%d\t", current_permutation[i]);
+    printf("\n");*/
 }
 
 
@@ -154,7 +154,7 @@ void find_ith_permutation(int arr[], int n, int i) {
 
 int main()
 {
-    const int n = 5;
+    const int n = 13;
     int solutions_number = factorial(n) - 1;
 
     int first_permutation[] = { 5, 4, 3, 2, 1 };
@@ -164,13 +164,17 @@ int main()
     }
     printf("\n");
 
-    // for (int o = 0; o < solutions_number; o++) {
-    //     next_permutation(n, first_permutation);    
-    // }
-    int excel_row = 98;
-    find_ith_permutation(first_permutation, n, excel_row - 2);
+    clock_t CPU_start, CPU_end;
+    CPU_start = clock();
+    
+     for (int o = 0; o < solutions_number; o++) {
+         next_permutation(n, first_permutation);    
+     }
+     CPU_end = clock();
+    /*int excel_row = 98;
+    find_ith_permutation(first_permutation, n, excel_row - 2)*/;
 
-
+    printf("Calculations time of %d!:   %6.4f s\n", n, static_cast<double>(CPU_end - CPU_start)/ CLOCKS_PER_SEC);
 
     return 0;
 }
