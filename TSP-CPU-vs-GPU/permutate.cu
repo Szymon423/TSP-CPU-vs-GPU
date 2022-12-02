@@ -11,6 +11,23 @@
 using namespace std;
 
 
+// definiowanie makra do obs³ugi b³êdów
+#define gpuErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__);}
+
+inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort = true) {
+    // sprawdzenie czy dzia³anie funkcji zakoñczy³o siê b³êdem
+    if (code != cudaSuccess) {
+        // printowanie b³êdu, pliku w którym wyst¹pi³ oraz linii kodu
+        fprintf(stderr, "GPUassert : %s %s %d\n", cudaGetErrorString(code), file, line);
+        if (abort) {
+            // jeœli przekazujemy argument true to exitujemy program
+            exit(code);
+        }
+    }
+}
+
+
+
 long long factorial(int n) {
     int resoult = 1;
     while (n) resoult *= n--;
@@ -19,18 +36,16 @@ long long factorial(int n) {
 
 
 
-void swap(int* a, int* b) {
-    int* temp = b;
+void swap(int& a, int& b) {
+    int temp = b;
     b = a;
     a = temp;
 }
 
 __device__ void swapGPU(int& a, int& b) {
     int temp = b;
-    printf("a: %d\tb: %d\n", a, b);
     b = a;
     a = temp;
-    printf("a: %d\tb: %d\n", a, b);
 }
 
 
@@ -219,13 +234,19 @@ __global__ void next_permutationGPU(int n, int current_permutation[]) {
 }
 
 
-void find_ith_permutation(int arr[], int n, int i) {
+void find_ith_permutation(int arr[], int n, int index) {
 
+    // stworzenie tablicy, na której bêd¹ przekszta³cenia
+    int* _arr = new int(n);
+    for (int j = 0; j < n; j++) {
+        _arr[j] = arr[j];
+    }
+    
     // create array with known size equal to n
     int* factoradic = new int(n);
 
     // factorial decomposition with modulo function
-    int rest = i;
+    int rest = index;
     for (int j = 1; j <= n; j++) {
         factoradic[n - j] = rest % j;
         rest /= j;
@@ -238,21 +259,23 @@ void find_ith_permutation(int arr[], int n, int i) {
     // iteration over all elements in factoradic
     for (int j = 0; j < n; j++) {
         // Assigning factoradic[j]-th element of array to target array 
-        permutation_arr[j] = arr[factoradic[j]];
+        permutation_arr[j] = _arr[factoradic[j]];
 
         // instead of creating new array I am moving all elements which will
         // still be in my factoradic to the left and I am decreasing size of
         // this array to assure that I am only using proper part of it
         for (int k = 0; k < (_n - factoradic[j]); k++) {
-            swap(arr[factoradic[j] + k], arr[factoradic[j] + k + 1]);
+            swap(_arr[factoradic[j] + k], _arr[factoradic[j] + k + 1]);
         }
         _n--;
     }
     // just simple print of permutation
     for (int o = 0; o < n; o++) {
-        printf("%d\t", permutation_arr[o]);
+        // printf("%d\t", permutation_arr[o]);
+        cout << permutation_arr[o] << "    ";
     }
-    printf("\n");
+    cout << endl;
+    // printf("\n");
 
     return;
 }
@@ -260,19 +283,28 @@ void find_ith_permutation(int arr[], int n, int i) {
 
 
 
-__global__ void find_ith_permutationGPU(int *arr, int n, int i) {
+__global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) {
 
+    int tid = threadIdx.x;
+    if (tid > sol_num) {
+        return;
+    }
+
+    // stworzenie tablicy, na której bêd¹ przekszta³cenia
+    int* _arr = new int(n);
+    for (int i = 0; i < n; i++) {
+        _arr[i] = arr[i];
+    }
+       
     // create array with known size equal to n
     int* factoradic = new int(n);
 
     // factorial decomposition with modulo function
-    int rest = i;
+    int rest = tid + 1;
     for (int j = 1; j <= n; j++) {
         factoradic[n - j] = rest % j;
         rest /= j;
-        printf("%d", factoradic[n - j]);
     }
-    printf("\n");
 
     // array to contain target permutation
     int* permutation_arr = new int(n);
@@ -281,25 +313,20 @@ __global__ void find_ith_permutationGPU(int *arr, int n, int i) {
     // iteration over all elements in factoradic
     for (int j = 0; j < n; j++) {
         // Assigning factoradic[j]-th element of array to target array 
-        permutation_arr[j] = arr[factoradic[j]];
+        permutation_arr[j] = _arr[factoradic[j]];
 
         // instead of creating new array I am moving all elements which will
         // still be in my factoradic to the left and I am decreasing size of
         // this array to assure that I am only using proper part of it
         for (int k = 0; k < (_n - factoradic[j]); k++) {
-            
-
-            //printf("before swap: %d\n", arr[factoradic[j + k]]);
-            swapGPU(arr[factoradic[j] + k], arr[factoradic[j] + k + 1]);
-            //printf("after swap: %d\n", arr[factoradic[j + k]]);
+            swapGPU(_arr[factoradic[j] + k], _arr[factoradic[j] + k + 1]);
         }
         _n--;
     }
-    // just simple print of permutation
+    // put proper element into target array
     for (int o = 0; o < n; o++) {
-        printf("%d\t", permutation_arr[o]);
+        sol[tid * n + o] = permutation_arr[o];
     }
-    printf("\n");
 
     return;
 }
@@ -308,10 +335,16 @@ __global__ void find_ith_permutationGPU(int *arr, int n, int i) {
 
 int main()
 {
-    int n = 5;
+    int n = 3;
     int solutions_number = factorial(n) - 1;
 
-    int* first_permutation = new int(n);
+    int* first_permutation;
+
+    // obliczenie rozmiaru w bajtach tablicy pojedynczej permutacji
+    int size_in_bytes = n * sizeof(int);
+    
+    first_permutation = (int*)malloc(size_in_bytes);
+
     for (int i = 0; i < n; i++) {
         first_permutation[i] = i + 1;
         printf("%d\t", first_permutation[i]);
@@ -321,9 +354,12 @@ int main()
 
     auto CPU_start = chrono::high_resolution_clock::now();
 
-    for (int o = 0; o < solutions_number; o++) {
+    /*for (int o = 0; o < solutions_number; o++) {
         next_permutation(n, first_permutation);
-    }
+    }*/
+    /*for (int o = 1; o <= solutions_number; o++) {
+        find_ith_permutation(first_permutation, n, o);
+    }*/
 
     auto CPU_finish = chrono::high_resolution_clock::now();
 
@@ -332,38 +368,65 @@ int main()
     /*int excel_row = 98;
     find_ith_permutation(first_permutation, n, excel_row - 2)*/;
 
-    printf("Calculations time of %d!:   %.3lf s\n", n, static_cast<double>(duration.count()/1000000.0));
-
-
     // ponowne uzupe³nienie first_permutation pierwotnym ci¹giem
     for (int i = 0; i < n; i++) {
         first_permutation[i] = i + 1;
     }
 
-    // obliczenie rozmiaru w bajtach tablicy pojedynczej permutacji
-    int size_in_bytes = n * sizeof(int);
-
-    // stworzenie wskaŸnika 
+    // stworzenie wskaŸnika na tablicê z permutacj¹ pocz¹tkow¹
     int* first_permutationGPU;
 
-    // alokacja pamiêci na GPU
-    cudaMalloc((void**)&first_permutationGPU, size_in_bytes);
+    // stworzenie wskaŸnika na tablicê rozwi¹zaniami w GPU oraz w CPU
+    int* solutionsGPU;
+    int* solutionsCPU;
+
+    // obliczenie rozmiaru w bajtach tablicy rozwi¹zañ -> ka¿de rozwi¹zanie to n intów wiêc n * sizeof(int) * iloœæ rozwi¹zañ
+    int size_in_bytes_of_solutions = n * solutions_number * sizeof(int);
+    solutionsCPU = (int*)malloc(size_in_bytes_of_solutions);
+
+
+    // alokacja pamiêci na GPU oraz na CPU
+    gpuErrorCheck(cudaMalloc((void**)&first_permutationGPU, size_in_bytes));
+    gpuErrorCheck(cudaMalloc((void**)&solutionsGPU, size_in_bytes_of_solutions));
+    solutionsCPU = (int*)malloc(size_in_bytes_of_solutions);
 
     // kopiowanie pamiêci z CPU do GPU
     cudaMemcpy(first_permutationGPU, first_permutation, size_in_bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(solutionsGPU, solutionsCPU, size_in_bytes_of_solutions, cudaMemcpyHostToDevice);
 
     // praca ma zostaæ wykonana na jedym w¹tku - tymczasowe
-    dim3 block(1);
+    dim3 block(1024);
     dim3 grid(1);
 
     // wywo³anie
-    find_ith_permutationGPU <<< grid, block >>> (first_permutationGPU, n, 10);
+    auto GPU_start = chrono::high_resolution_clock::now();
+    find_ith_permutationGPU <<< grid, block >>> (solutionsGPU, first_permutationGPU, n, solutions_number);
     
     // odczekanie a¿ zostanie ukoñczone zadanie kernela
     cudaDeviceSynchronize();
 
+    auto GPU_finish = chrono::high_resolution_clock::now();
+    auto GPUduration = chrono::duration_cast<chrono::microseconds>(GPU_finish - GPU_start);
+
+    // kopiowanie obliczonych danych spowrotem do CPU
+    cudaMemcpy(solutionsCPU, solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyDeviceToHost);
+
+    for (int p = 0; p < solutions_number; p++) {
+        for (int r = 0; r < n; r++) {
+            printf("%d\t", solutionsCPU[n*p + r]);
+        }
+        printf("\n");
+    }
+    // printowanie czasów obliczeñ
+    printf("Obliczenia dla %d!\n", n);
+    printf("CPU time:\t%d us\n", static_cast<double>(duration.count()));
+    printf("GPU time:\t%d us\n", static_cast<double>(GPUduration.count()));
+
+
     // zwolnienie pamiêci w GPU
     cudaFree(first_permutationGPU);
+
+    cudaDeviceReset();
 
     return 0;
 }
