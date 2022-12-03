@@ -7,6 +7,8 @@
 #include <chrono>
 #include "permutate.cuh"
 
+#pragma comment(lib, "winmm.lib")
+
 
 using namespace std;
 
@@ -234,7 +236,7 @@ __global__ void next_permutationGPU(int n, int current_permutation[]) {
 }
 
 
-void find_ith_permutation(int arr[], int n, int index) {
+void find_ith_permutation(int arr[], int n, int index, int *sol) {
 
     // stworzenie tablicy, na której bêd¹ przekszta³cenia
     int* _arr = new int(n);
@@ -271,10 +273,9 @@ void find_ith_permutation(int arr[], int n, int index) {
     }
     // just simple print of permutation
     for (int o = 0; o < n; o++) {
+        sol[index * n + o] = permutation_arr[o];
         // printf("%d\t", permutation_arr[o]);
-        cout << permutation_arr[o] << "    ";
     }
-    cout << endl;
     // printf("\n");
 
     return;
@@ -300,7 +301,7 @@ __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) 
     int* factoradic = new int(n);
 
     // factorial decomposition with modulo function
-    int rest = tid + 1;
+    int rest = tid;
     for (int j = 1; j <= n; j++) {
         factoradic[n - j] = rest % j;
         rest /= j;
@@ -335,35 +336,49 @@ __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) 
 
 int main()
 {
-    int n = 3;
-    int solutions_number = factorial(n) - 1;
+    int n = 5;
+    int solutions_number = factorial(n);
 
     int* first_permutation;
 
     // obliczenie rozmiaru w bajtach tablicy pojedynczej permutacji
     int size_in_bytes = n * sizeof(int);
-    
+   
     first_permutation = (int*)malloc(size_in_bytes);
 
+    // stworzenie wskaŸnika na tablicê z permutacj¹ pocz¹tkow¹
+    int* first_permutationGPU;
+
+    // stworzenie wskaŸnika na tablicê rozwi¹zañ z GPU znajduj¹c¹ siê w RAMie CPU
+    int* d_solutionsGPU;
+
+    // wskaŸnik na rozwi¹zania z GPU w VRAMie
+    int* h_solutionsGPU;
+
+    // wskaŸnik na rozwi¹zania z CPU w RAMie
+    int* h_solutionsCPU;
+
+    // obliczenie rozmiaru w bajtach tablicy rozwi¹zañ -> ka¿de rozwi¹zanie to n intów wiêc n * sizeof(int) * iloœæ rozwi¹zañ
+    int size_in_bytes_of_solutions = n * solutions_number * sizeof(int);
+    h_solutionsGPU = (int*)malloc(size_in_bytes_of_solutions);
+    h_solutionsCPU = (int*)malloc(size_in_bytes_of_solutions);
+
+    // filling array with values of 0-th permutation
     for (int i = 0; i < n; i++) {
         first_permutation[i] = i + 1;
-        printf("%d\t", first_permutation[i]);
     }
-    printf("\n");
-
 
     auto CPU_start = chrono::high_resolution_clock::now();
 
-    /*for (int o = 0; o < solutions_number; o++) {
-        next_permutation(n, first_permutation);
-    }*/
-    /*for (int o = 1; o <= solutions_number; o++) {
-        find_ith_permutation(first_permutation, n, o);
-    }*/
+    // for (int o = 0; o < solutions_number; o++) {
+    //     next_permutation(n, first_permutation);
+    // }
+    for (int o = 1; o <= solutions_number; o++) {
+        find_ith_permutation(first_permutation, n, o, h_solutionsCPU);
+    }
 
     auto CPU_finish = chrono::high_resolution_clock::now();
-
-    auto duration = chrono::duration_cast<chrono::microseconds>(CPU_finish - CPU_start);
+    auto CPU_duration = chrono::duration_cast<chrono::microseconds>(CPU_finish - CPU_start);
 
     /*int excel_row = 98;
     find_ith_permutation(first_permutation, n, excel_row - 2)*/;
@@ -371,56 +386,57 @@ int main()
     // ponowne uzupe³nienie first_permutation pierwotnym ci¹giem
     for (int i = 0; i < n; i++) {
         first_permutation[i] = i + 1;
+        // h_solutionsCPU[i] = first_permutation[i];
     }
-
-    // stworzenie wskaŸnika na tablicê z permutacj¹ pocz¹tkow¹
-    int* first_permutationGPU;
-
-    // stworzenie wskaŸnika na tablicê rozwi¹zaniami w GPU oraz w CPU
-    int* solutionsGPU;
-    int* solutionsCPU;
-
-    // obliczenie rozmiaru w bajtach tablicy rozwi¹zañ -> ka¿de rozwi¹zanie to n intów wiêc n * sizeof(int) * iloœæ rozwi¹zañ
-    int size_in_bytes_of_solutions = n * solutions_number * sizeof(int);
-    solutionsCPU = (int*)malloc(size_in_bytes_of_solutions);
-
 
     // alokacja pamiêci na GPU oraz na CPU
     gpuErrorCheck(cudaMalloc((void**)&first_permutationGPU, size_in_bytes));
-    gpuErrorCheck(cudaMalloc((void**)&solutionsGPU, size_in_bytes_of_solutions));
-    solutionsCPU = (int*)malloc(size_in_bytes_of_solutions);
+    gpuErrorCheck(cudaMalloc((void**)&d_solutionsGPU, size_in_bytes_of_solutions));
 
     // kopiowanie pamiêci z CPU do GPU
     cudaMemcpy(first_permutationGPU, first_permutation, size_in_bytes, cudaMemcpyHostToDevice);
-    cudaMemcpy(solutionsGPU, solutionsCPU, size_in_bytes_of_solutions, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_solutionsGPU, h_solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyHostToDevice);
 
     // praca ma zostaæ wykonana na jedym w¹tku - tymczasowe
+
     dim3 block(1024);
     dim3 grid(1);
 
-    // wywo³anie
+    // timer start
     auto GPU_start = chrono::high_resolution_clock::now();
-    find_ith_permutationGPU <<< grid, block >>> (solutionsGPU, first_permutationGPU, n, solutions_number);
+
+    // calling kernel
+    find_ith_permutationGPU <<< grid, block >>> (d_solutionsGPU, first_permutationGPU, n, solutions_number);
     
-    // odczekanie a¿ zostanie ukoñczone zadanie kernela
+    // wait till device sunc
     cudaDeviceSynchronize();
 
     auto GPU_finish = chrono::high_resolution_clock::now();
-    auto GPUduration = chrono::duration_cast<chrono::microseconds>(GPU_finish - GPU_start);
+    auto GPU_duration = chrono::duration_cast<chrono::microseconds>(GPU_finish - GPU_start);
 
     // kopiowanie obliczonych danych spowrotem do CPU
-    cudaMemcpy(solutionsCPU, solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_solutionsGPU, d_solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyDeviceToHost);
+
+    // filling up solutions with first permutation
+    for (int i = 1; i <= n; i++) {
+        h_solutionsGPU[i-1] = i;
+        h_solutionsCPU[i-1] = i;
+    }
 
     for (int p = 0; p < solutions_number; p++) {
         for (int r = 0; r < n; r++) {
-            printf("%d\t", solutionsCPU[n*p + r]);
+            printf("%d\t", h_solutionsGPU[n*p + r]);
+        }
+        printf("\t\t");
+        for (int r = 0; r < n; r++) {
+            printf("%d\t", h_solutionsCPU[n * p + r]);
         }
         printf("\n");
     }
     // printowanie czasów obliczeñ
     printf("Obliczenia dla %d!\n", n);
-    printf("CPU time:\t%d us\n", static_cast<double>(duration.count()));
-    printf("GPU time:\t%d us\n", static_cast<double>(GPUduration.count()));
+    printf("CPU time:\t%d us\n", CPU_duration.count());
+    printf("GPU time:\t%d us\n", GPU_duration.count()); 
 
 
     // zwolnienie pamiêci w GPU
