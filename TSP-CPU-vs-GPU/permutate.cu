@@ -278,6 +278,10 @@ void find_ith_permutation(int arr[], int n, int index, int *sol) {
     }
     // printf("\n");
 
+    /*free(factoradic);
+    free(permutation_arr);
+    free(_arr);*/
+
     return;
 }
 
@@ -286,8 +290,13 @@ void find_ith_permutation(int arr[], int n, int index, int *sol) {
 
 __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) {
 
+    // calculating id for each thread
     int tid = threadIdx.x;
-    if (tid > sol_num) {
+    int block_offset = blockIdx.x * blockDim.x;
+    int row_offset = blockDim.x * gridDim.x * blockIdx.y;
+    int gid = row_offset + block_offset + tid;
+
+    if (gid > sol_num) {
         return;
     }
 
@@ -301,7 +310,7 @@ __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) 
     int* factoradic = new int(n);
 
     // factorial decomposition with modulo function
-    int rest = tid;
+    int rest = gid;
     for (int j = 1; j <= n; j++) {
         factoradic[n - j] = rest % j;
         rest /= j;
@@ -326,7 +335,7 @@ __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) 
     }
     // put proper element into target array
     for (int o = 0; o < n; o++) {
-        sol[tid * n + o] = permutation_arr[o];
+        sol[gid * n + o] = permutation_arr[o];
     }
 
     return;
@@ -334,8 +343,8 @@ __global__ void find_ith_permutationGPU(int *sol, int *arr, int n, int sol_num) 
 
 
 
-int main()
-{
+int main() {
+
     int n = 5;
     int solutions_number = factorial(n);
 
@@ -373,8 +382,8 @@ int main()
     // for (int o = 0; o < solutions_number; o++) {
     //     next_permutation(n, first_permutation);
     // }
-    for (int o = 1; o <= solutions_number; o++) {
-        find_ith_permutation(first_permutation, n, o, h_solutionsCPU);
+    for (int o = 0; o < solutions_number; o++) {
+        find_ith_permutation(first_permutation, n, o+1, h_solutionsCPU);
     }
 
     auto CPU_finish = chrono::high_resolution_clock::now();
@@ -397,10 +406,9 @@ int main()
     cudaMemcpy(first_permutationGPU, first_permutation, size_in_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(d_solutionsGPU, h_solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyHostToDevice);
 
-    // praca ma zostaæ wykonana na jedym w¹tku - tymczasowe
-
-    dim3 block(1024);
-    dim3 grid(1);
+    // dla 10! :
+    dim3 block(10);
+    dim3 grid(10, 10);
 
     // timer start
     auto GPU_start = chrono::high_resolution_clock::now();
@@ -435,12 +443,15 @@ int main()
     }
     // printowanie czasów obliczeñ
     printf("Obliczenia dla %d!\n", n);
-    printf("CPU time:\t%d us\n", CPU_duration.count());
-    printf("GPU time:\t%d us\n", GPU_duration.count()); 
+    printf("CPU time:\t%lld us\n", CPU_duration.count());
+    printf("GPU time:\t%lld us\n", GPU_duration.count()); 
 
-
+    
     // zwolnienie pamiêci w GPU
     cudaFree(first_permutationGPU);
+    cudaFree(d_solutionsGPU);
+    free(h_solutionsCPU);
+    free(h_solutionsGPU);
 
     cudaDeviceReset();
 
