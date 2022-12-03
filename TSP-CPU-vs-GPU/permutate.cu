@@ -239,23 +239,27 @@ __global__ void next_permutationGPU(int n, int current_permutation[]) {
 void find_ith_permutation(int arr[], int n, int index, int *sol) {
 
     // stworzenie tablicy, na której bêd¹ przekszta³cenia
-    int* _arr = new int(n);
+    // int* _arr = new int(n);
+    int* _arr = (int*)malloc(n * sizeof(int));
     for (int j = 0; j < n; j++) {
         _arr[j] = arr[j];
     }
     
     // create array with known size equal to n
-    int* factoradic = new int(n);
+    // int* factoradic = new int(n);
+    int* factoradic = (int*)malloc(n * sizeof(int));
 
     // factorial decomposition with modulo function
     int rest = index;
     for (int j = 1; j <= n; j++) {
         factoradic[n - j] = rest % j;
         rest /= j;
+        // printf("factoradic[%d] = %d\n", n - j, factoradic[n - j]);
     }
 
     // array to contain target permutation
-    int* permutation_arr = new int(n);
+    // int* permutation_arr = new int(n);
+    int* permutation_arr = (int*)malloc(n * sizeof(int));
     int _n = n - 1;
 
     // iteration over all elements in factoradic
@@ -278,9 +282,9 @@ void find_ith_permutation(int arr[], int n, int index, int *sol) {
     }
     // printf("\n");
 
-    /*free(factoradic);
+    free(factoradic);
     free(permutation_arr);
-    free(_arr);*/
+    free(_arr);
 
     return;
 }
@@ -395,7 +399,6 @@ int main() {
     // ponowne uzupe³nienie first_permutation pierwotnym ci¹giem
     for (int i = 0; i < n; i++) {
         first_permutation[i] = i + 1;
-        // h_solutionsCPU[i] = first_permutation[i];
     }
 
     // alokacja pamiêci na GPU oraz na CPU
