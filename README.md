@@ -156,8 +156,15 @@ Pierwsza liczba w ciągu silniowym to 0, oznacza to, że jako pierwszą cyfrę d
 Jak widać, uzyskana permutacja jest dokładnie taka sama jak ręcznie wyznaczona wcześniej.
   
 ## Obliczenia równoległe
-  
-Mogąc obliczać punkty startowe dla każdego z wątków oraz potrafiąc generować kolejne permutacje możliwe staje się zrównoleglenie obliczeń dla wszystkich możliwych permutacji. Zobaczymy co z tego wyjdzie...
+
+Podejście jakie planuję przyjąć jest dwojakie:
+ * każdy z wątków oblicza kolejne permutacje dla swojej grupy, która dostała permutację początkową wyliczoną na podstawie rozkładu silniowego - w jednym podejściu, możemy obliczyć wszystkie możliwe permutacje.
+ * każdy i-ty wątek liczy i-tą permutację. Jednak nie mamy nieskończoność wątków, tylko jakieś 1024 * 1024 * 64 = 67 108 864 (67 baniek). Oznacza to, że na strzała będziemy mogli obliczyć nawet 11! permutacji, ponieważ 11! = 39 916 800 (39 baniek). Jednak chcąc obliczyć pozostałe permutacje, będziemy musieli wszystkie wątki ponownie zaprzęc do roboty, tak, żeby obliczyły pozostałe permutacje gdy ich łączna ilość przekracza ~67 baniek.
+
+Na ten moment zająłem się drugą wersją, i nawet działa. Jednak jest ona dość upośledzona ponieważ nie ma adaptacyjnie dobieranych rozmiarów grid'ów i block'ów, do tego nie ma sprawdzania czy nie musimy liczyć więcej niż 1 raz za pomocą wszystkich wątków (dla permutacji powyżej 11!).
+
+Co śmieszne, algorytm do wyznaczania itej permutacji wywala się na mordę jak zaczynam liczyć to za pomocą CPU - do sprawdzenia czemu.
+
   
 
 
