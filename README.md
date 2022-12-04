@@ -163,8 +163,20 @@ Podejście jakie planuję przyjąć jest dwojakie:
 
 Na ten moment zająłem się drugą wersją, i nawet działa. Jednak jest ona dość upośledzona ponieważ nie ma adaptacyjnie dobieranych rozmiarów grid'ów i block'ów, do tego nie ma sprawdzania czy nie musimy liczyć więcej niż 1 raz za pomocą wszystkich wątków (dla permutacji powyżej 11!).
 
-Co śmieszne, algorytm do wyznaczania itej permutacji wywala się na mordę jak zaczynam liczyć to za pomocą CPU - do sprawdzenia czemu.
+Na ten moment to co działa składa się z wyznaczania i-tej iteracji za pomocą GPU. Adapatacyjnie - odpowiednio do ilości koniecznych obliczeń do wykonania uruchamiam wątki, które obliczają iterację o numerze odpowiadającym ich indeksie. Dodatkowo procesor wykonuje sekwencyjnie operacje wyznaczenia i-tej operacji. Operacje wykonywane są w jednymn i drugim miejscu w celu weryfikacji poprawności obliczeń na GPU oraz porównania czasów jakie są konieczne na wykonanie tych obliczeń.
 
-  
+### Uzyskane rezultaty
+Niestety efekty obliczeń nie są satysfakcjonujące. GPU jest przy aktualnym algorytmie wolniejsze od CPU...
+Tak prezentują się czasy obliczeń dla poszczególnej liczby węzłów:
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522830-a8f08199-d766-4063-8ca1-fb1d87e33834.png">
+</p>
+ 
+ Łatwiej jednak porównać wyniki na wykresach:
+ 
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522892-42c28dea-0836-44b8-8a8c-3c05044dbb0c.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
+</p>
 
 
