@@ -2,11 +2,11 @@
 #include "device_launch_parameters.h"
 
 #include <iostream>
-//#include <stdio.h>
-#include <algorithm>
 #include <chrono>
-#include "permutate.cuh"
 
+//#include <stdio.h>
+//#include <algorithm>
+//#include "permutate.cuh"
 #pragma comment(lib, "winmm.lib")
 
 
@@ -29,8 +29,8 @@ inline void gpuAssert(cudaError_t code, const char* file, int line, bool abort =
 }
 
 
-int factorial(int n) {
-	int resoult = 1;
+unsigned long long factorial(int n) {
+	unsigned long long resoult = 1;
 	while (n) resoult *= n--;
 	return resoult;
 }
@@ -299,21 +299,26 @@ __global__ void find_ith_permutationGPU(int* sol, int* arr, int n, int sol_num) 
 	int offset = blockIdx.x * blockDim.x;
 	int gid = offset + tid;
 
-	
-
 	if (gid > sol_num) {
 		return;
 	}
-	// printf("%d\n", gid);
 
 	// stworzenie tablicy, na której bêd¹ przekszta³cenia
 	int* _arr = new int(n);
+	if (_arr == NULL) {
+		printf("Memory not allocated at: _arr \t\t\t gid: %d\n", gid);
+	}
+
 	for (int i = 0; i < n; i++) {
 		_arr[i] = arr[i];
 	}
 
 	// create array with known size equal to n
 	int* factoradic = new int(n);
+
+	if (factoradic == NULL) {
+		printf("Memory not allocated at: factoradic \t\t gid: %d\n", gid);
+	}
 
 	// factorial decomposition with modulo function
 	int rest = gid;
@@ -324,6 +329,11 @@ __global__ void find_ith_permutationGPU(int* sol, int* arr, int n, int sol_num) 
 
 	// array to contain target permutation
 	int* permutation_arr = new int(n);
+
+	if (permutation_arr == NULL) {
+		printf("Memory not allocated at: permutation_arr \t gid: %d\n", gid);
+	}
+
 	int _n = n - 1;
 
 	// iteration over all elements in factoradic
@@ -343,6 +353,9 @@ __global__ void find_ith_permutationGPU(int* sol, int* arr, int n, int sol_num) 
 	for (int o = 0; o < n; o++) {
 		sol[gid * n + o] = permutation_arr[o];
 	}
+	delete[] _arr;
+	delete[] factoradic;
+	delete[] permutation_arr;
 	return;
 }
 
@@ -370,29 +383,6 @@ bool checkValidity(int* GPU, int* CPU, int sol_num, int n) {
 			}
 		}
 	}
-	
-	
-	for (int i = 0; i < sol_num; i++) {
-		if (GPU[i] != CPU[i]) {
-			printf("Not valid data at index : %d\n", i/n);
-			// pokazanie kilku rozwi¹zañ z miejsca wyst¹pienia b³êdu
-			int start = i / n - 5;
-			int stop = start + 5;
-
-			for (int p = start; p < stop; p++) {
-				printf("%d\t\t", p);
-				for (int r = 0; r < n; r++) {
-					printf("%d\t", GPU[n * p + r]);
-				}
-				printf("\t\t");
-				for (int r = 0; r < n; r++) {
-					printf("%d \t", CPU[n * p + r]);
-				}
-				printf("\n");
-			}
-			return false;
-		}
-	}
 	return true;
 }
 
@@ -406,24 +396,31 @@ struct dimensions {
 dimensions get_dimensions(int sol_num) {
 	dimensions dim;
 	if (sol_num < 1024) {
-		int dopasowanie_do_warp = sol_num / 32;
-		dim.block = 32 + dopasowanie_do_warp * 32;
+		// polecane wartoœci to 128 / 256 - zawsze wielokrotnoœæ 32
+		int minimal_block_size = 128; 
+		
+		// how many minimal_block_size fits in sol_num
+		int help = sol_num / minimal_block_size;
+
+		// make it minimal value that covers all solutions
+		dim.block = minimal_block_size + help * minimal_block_size;
 		dim.grid_x = 1;
 		return dim;
 	}
-	int i;
-	int div = 1024;
-	i = 1 + sol_num / div;
-	dim.block = 1024;
-	dim.grid_x = i;
+	int max_threads_per_block = 1024;
+	dim.block = max_threads_per_block;
+	dim.grid_x = 1 + sol_num / max_threads_per_block;
 	return dim;
 }
 
 
-int main() {
+ int main(int argc, char **argv) {
+//int main() {
 
-	int n = 8;
-	int solutions_number = factorial(n);
+	int n = atoi(argv[1]);
+	// int n = 10;
+
+	unsigned long long solutions_number = factorial(n);
 
 	int* first_permutation = 0;
 
@@ -437,15 +434,9 @@ int main() {
 		first_permutation[i] = i + 1;
 	}
 
-	
-
 	// for (int o = 0; o < solutions_number; o++) {
 	//     next_permutation(n, first_permutation);
 	// }
-
-	// calling timer and substracting to get duration
-
-
 	// std::printf("CPU computing done!\n");
 	// cout << "CPU computing done!\n";
 	// 
@@ -455,7 +446,7 @@ int main() {
 	// }
 
 	// obliczenie rozmiaru w bajtach tablicy rozwi¹zañ -> ka¿de rozwi¹zanie to n intów wiêc n * sizeof(int) * iloœæ rozwi¹zañ
-	int size_in_bytes_of_solutions = n * solutions_number * sizeof(int);
+	unsigned long long size_in_bytes_of_solutions = n * solutions_number * sizeof(int);
 
 	// wskaŸnik na rozwi¹zania pochodz¹ce z GPU w RAMie
 	int* h_solutionsGPU = (int*)malloc(static_cast<size_t>(n * solutions_number * sizeof(int)));
@@ -490,8 +481,8 @@ int main() {
 	dimensions dims = get_dimensions(solutions_number);
 	dim3 block(dims.block, 1, 1);
 	dim3 grid(dims.grid_x, 1, 1);
-	printf("block.x : %d\n", block.x);
-	printf("grid.x : %d\n", grid.x);
+	// printf("block.x : %d\n", block.x);
+	// printf("grid.x : %d\n", grid.x);
 
 	// timer start
 	auto GPU_start = chrono::high_resolution_clock::now();
@@ -514,9 +505,10 @@ int main() {
 	h_solutionsCPU = (int*)malloc(static_cast<size_t>(n * solutions_number * sizeof(int)));
 
 	if (h_solutionsCPU == NULL) {
-		std::printf("Memory not allocated.\n");
+		printf("Memory not allocated.\n");
 	}
-	// ---------------------------------------------------TO GÓWNO PONI¯EJ POWODUJE B£ÊDY W T F--------------------------------------
+	// ----------------------------------TO GÓWNO PONI¯EJ wed³ug mnie wczeœniej powodowa³o b³êdy--------------------------------------
+	// https://stackoverflow.com/questions/28289312/illegal-memory-access-on-cudadevicesynchronize  - fajnie opisane co w zasadzie siê odpierdala - wykraczam poza pamieæ
 	auto CPU_start = chrono::high_resolution_clock::now();
 	for (int o = 0; o < solutions_number; o++) {
 		find_ith_permutation(first_permutation, n, o + 1, h_solutionsCPU);
