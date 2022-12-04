@@ -415,7 +415,7 @@ dimensions get_dimensions(int sol_num) {
 
 
  int main(int argc, char **argv) {
-//int main() {
+	//int main() {
 
 	int n = atoi(argv[1]);
 	// int n = 10;
@@ -481,8 +481,8 @@ dimensions get_dimensions(int sol_num) {
 	dimensions dims = get_dimensions(solutions_number);
 	dim3 block(dims.block, 1, 1);
 	dim3 grid(dims.grid_x, 1, 1);
-	// printf("block.x : %d\n", block.x);
-	// printf("grid.x : %d\n", grid.x);
+	printf("block.x : %d\n", block.x);
+	printf("grid.x : %d\n", grid.x);
 
 	// timer start
 	auto GPU_start = chrono::high_resolution_clock::now();
@@ -513,8 +513,8 @@ dimensions get_dimensions(int sol_num) {
 	for (int o = 0; o < solutions_number; o++) {
 		find_ith_permutation(first_permutation, n, o + 1, h_solutionsCPU);
 	}
-	 auto CPU_finish = chrono::high_resolution_clock::now();
-	 auto CPU_duration = chrono::duration_cast<chrono::microseconds>(CPU_finish - CPU_start);
+		auto CPU_finish = chrono::high_resolution_clock::now();
+		auto CPU_duration = chrono::duration_cast<chrono::microseconds>(CPU_finish - CPU_start);
 	// ------------------------------------------------------------------------------------------------------------------------------
 
 	// filling up solutions with first permutation
@@ -540,6 +540,7 @@ dimensions get_dimensions(int sol_num) {
 	
 	// printowanie czasów obliczeñ
 	printf("Obliczenia dla %d!\n", n);
+	printf("Liczba wynikow %d\n", solutions_number);
 	if (data_equality) printf("Obliczenia sa poprawne\n");
 	else printf("Niepoprawne obliczenia\n");
 	printf("CPU time:\t%lld us\n", CPU_duration.count());
