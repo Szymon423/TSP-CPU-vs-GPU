@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <chrono>
+#include <time.h>
+#include <stdlib.h>
 
 //#include <stdio.h>
 //#include <algorithm>
@@ -283,9 +285,9 @@ void find_ith_permutation(int arr[], int n, int index, int* sol) {
 	}
 	// printf("\n");
 
-	free(factoradic);
-	free(permutation_arr);
-	free(_arr);
+	std::free(factoradic);
+	std::free(permutation_arr);
+	std::free(_arr);
 
 	return;
 }
@@ -368,7 +370,7 @@ __device__ void find_ith_permutationGPU(int* sol, int* arr, int n, int index) {
 	// stworzenie tablicy, na której bêd¹ przekszta³cenia
 	int* _arr = new int(n);
 	if (_arr == NULL) {
-		printf("Memory not allocated at: _arr \t\t\t gid: %d\n", index);
+		std::printf("Memory not allocated at: _arr \t\t\t gid: %d\n", index);
 	}
 
 	for (int i = 0; i < n; i++) {
@@ -379,7 +381,7 @@ __device__ void find_ith_permutationGPU(int* sol, int* arr, int n, int index) {
 	int* factoradic = new int(n);
 
 	if (factoradic == NULL) {
-		printf("Memory not allocated at: factoradic \t\t gid: %d\n", index);
+		std::printf("Memory not allocated at: factoradic \t\t gid: %d\n", index);
 	}
 
 	// factorial decomposition with modulo function
@@ -393,7 +395,7 @@ __device__ void find_ith_permutationGPU(int* sol, int* arr, int n, int index) {
 	int* permutation_arr = new int(n);
 
 	if (permutation_arr == NULL) {
-		printf("Memory not allocated at: permutation_arr \t gid: %d\n", index);
+		std::printf("Memory not allocated at: permutation_arr \t gid: %d\n", index);
 	}
 
 	int _n = n - 1;
@@ -439,7 +441,7 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 	// 0-th permutation
 	int* zero_permutation = new int(n);
 	if (zero_permutation == NULL) {
-		printf("Memory not allocated at: zero_permutation \t\t\t gid: %d\n", gid);
+		std::printf("Memory not allocated at: zero_permutation \t\t\t gid: %d\n", gid);
 	}
 
 	// filling up first permutation
@@ -450,7 +452,7 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 	// place for i-th permutation
 	int* ith_permutation = new int(n);
 	if (ith_permutation == NULL) {
-		printf("Memory not allocated at: ith_permutation \t\t\t gid: %d\n", gid);
+		std::printf("Memory not allocated at: ith_permutation \t\t\t gid: %d\n", gid);
 	}
 	
 
@@ -482,19 +484,19 @@ bool checkValidity(int* GPU, int* CPU, int sol_num, int n) {
 	for (int i = 0; i < sol_num; i++) {
 		for (int j = 0; j < n; j++) {
 			if (GPU[i * n + j] != CPU[i * n + j]) {
-				printf("\nNot valid data at index : %d\n", i);
+				std::printf("\nNot valid data at index : %d\n", i);
 				
 				// pokazanie kilku rozwi¹zañ z miejsca wyst¹pienia b³êdu
 				for (int p = i-1 ; p < i + 5; p++) {
-					printf("%d\t\t", p);
+					std::printf("%d\t\t", p);
 					for (int r = 0; r < n; r++) {
-						printf("%d\t", GPU[n * p + r]);
+						std::printf("%d\t", GPU[n * p + r]);
 					}
-					printf("\t\t");
+					std::printf("\t\t");
 					for (int r = 0; r < n; r++) {
-						printf("%d \t", CPU[n * p + r]);
+						std::printf("%d \t", CPU[n * p + r]);
 					}
-					printf("\n");
+					std::printf("\n");
 				}
 				return false;
 			}
@@ -544,13 +546,91 @@ dimensions get_dimensions(int n, int sol_num) {
 }
 
 
-int main(int argc, char **argv) {
-// int main() {
+// int main(int argc, char **argv) {
+int main() {
 
-	int n = atoi(argv[1]);
-	// int n = 11;
+	//int m = atoi(argv[1]);
+	int m = 5;
+
+	int n = m - 1;
 
 	unsigned long long solutions_number = factorial(n);
+	// -------------------------------------------------- GRAF -----------------------------------------------
+		
+	// macierz po³o¿eñ - m x m, w przestrzeni kartezjañskiej 2d ale zapisana w formie tablicy 1d, zamiast 2d
+	// kazdy punkt (miasto) ma wspó³rzêdne x oraz y
+	int* location = (int*)malloc(static_cast<size_t>(2 * m * sizeof(int)));
+
+	// losowanie unikatowych punktów w przestrzeni
+	srand(time(NULL));
+
+	bool point_allready_exist = false;
+	int x, y;
+
+	for (int i = 0; i < 2 * m; i += 2) {
+		// losowanie punktu, którego jeszcze nie by³o
+		point_allready_exist = false;
+
+		// realizuj tak d³ugo, a¿ wylosowany punkt bêdzie inny od istniej¹cych
+		do {
+			// przyjmujemy, ¿e punkt jest unikatowy
+			point_allready_exist = false;
+
+			// losujemy wspó³rzêdne
+			x = rand() % (m + 1);
+			y = rand() % (m + 1);
+
+			// sprawdzenie, czy nie istnieje ju¿ punkt o tych wspó³rzêdnych
+			for (int j = 0; j < i; j += 2) {
+				// sprawdzenie wspó³rzêdnej X
+				if (x == location[i - j]) {
+					// sprawdzenie wspó³rzêdnej Y
+					if (y == location[i - j + 1]) {
+						point_allready_exist = true;
+					}
+				}
+			}
+
+		} while (point_allready_exist);	
+
+		location[i] = x;
+		location[i + 1] = y;
+		std::printf("node: %d\t\tx: %d\ty: %d\n", i/2, location[i], location[i + 1]);
+	}
+
+	// macierz odleg³oœci - w formie tablicy 1d, zamiast 2d (pogl¹dowo 2d:)
+	//					to
+	//	        | 0   1   2   3  
+	//	    ----|----------------
+	//   f    0	|
+	//   r    1	|
+	//   o    2	|
+	//   m    3	|
+
+	float* distance = (float*)malloc(static_cast<size_t>(m * m * sizeof(float)));
+
+	// uzupe³nianie macierzy odleg³oœci from i to j
+	for (int i = 0; i < m; i++) {
+		for (int j = 0; j < m; j++) {
+			// obliczenie odleg³oœci w osi X
+			int delta_x = abs(location[2 * i] - location[2 * j]);
+
+			// obliczenie odleg³oœci w osi Y
+			int delta_y = abs(location[2 * i + 1] - location[2 * j + 1]);
+
+			// obliczenie odleg³oœci - pitagoras
+			float dist = sqrt(delta_x * delta_x + delta_y * delta_y);
+
+			// zapisanie odpowiednych wartoœci
+			distance[i * m + j] = dist;
+
+			std::printf("from: %d\tto: %d\tdist: %4.2f\n", i, j, distance[i * m + j]);
+		}
+	}		
+
+	// punkt startowy 
+	int source = 0;
+
 
 	int* first_permutation = 0;
 
@@ -569,7 +649,7 @@ int main(int argc, char **argv) {
 	h_solutionsCPU = (int*)malloc(static_cast<size_t>(n * solutions_number * sizeof(int)));
 
 	if (h_solutionsCPU == NULL) {
-		printf("Memory not allocated.\n");
+		std::printf("Memory not allocated.\n");
 	}
 
 	// ---------------------------------------------NEXT PERMUTATION--------------------------------------------------------
@@ -596,7 +676,7 @@ int main(int argc, char **argv) {
 	int* h_solutionsGPU = (int*)malloc(static_cast<size_t>(n * solutions_number * sizeof(int)));
 	// int* h_solutionsGPU = new int(static_cast<unsigned long long>(n) * solutions_number);
 	if (h_solutionsGPU == NULL) {
-		printf("Memory not allocated.\n");
+		std::printf("Memory not allocated.\n");
 	}
 
 	// alokacja pamiêci na GPU oraz na CPU
@@ -605,7 +685,7 @@ int main(int argc, char **argv) {
 	int* d_solutionsGPU;
 	gpuErrorCheck(cudaMalloc((void**)&d_solutionsGPU, static_cast<size_t>(n * solutions_number * sizeof(int))));
 	if (d_solutionsGPU == NULL) {
-		printf("Memory not allocated.\n");
+		std::printf("Memory not allocated.\n");
 	}
 
 	// stworzenie wskaŸnika na tablicê z permutacj¹ pocz¹tkow¹
@@ -625,9 +705,9 @@ int main(int argc, char **argv) {
 	dimensions dims = get_dimensions(n, solutions_number);
 	dim3 block(dims.block, 1, 1);
 	dim3 grid(dims.grid_x, 1, 1);
-	printf("block.x : %d\n", block.x);
-	printf("grid.x : %d\n", grid.x);
-	printf("solutions_per_thread : %d\n", dims.solutions_per_thread);
+	std::printf("block.x : %d\n", block.x);
+	std::printf("grid.x : %d\n", grid.x);
+	std::printf("solutions_per_thread : %d\n", dims.solutions_per_thread);
 
 	// timer start
 	auto GPU_start = chrono::high_resolution_clock::now();
@@ -678,18 +758,18 @@ int main(int argc, char **argv) {
 	bool data_equality = checkValidity(h_solutionsGPU, h_solutionsCPU, solutions_number, n);
 	
 	// printowanie czasów obliczeñ
-	printf("Obliczenia dla %d!\n", n);
-	printf("Liczba wynikow %d\n", solutions_number);
-	if (data_equality) printf("Obliczenia sa poprawne\n");
-	else printf("Niepoprawne obliczenia\n");
-	printf("CPU time:\t%lld us\n", CPU_duration.count());
-	printf("GPU time:\t%lld us\n", GPU_duration.count());
+	std::printf("Obliczenia dla %d!\n", n);
+	std::printf("Liczba wynikow %d\n", solutions_number);
+	if (data_equality) std::printf("Obliczenia sa poprawne\n");
+	else std::printf("Niepoprawne obliczenia\n");
+	std::printf("CPU time:\t%lld us\n", CPU_duration.count());
+	std::printf("GPU time:\t%lld us\n", GPU_duration.count());
 
 	//zwolnienie pamiêci w GPU
 	cudaFree(first_permutationGPU);
 	cudaFree(d_solutionsGPU);
-	free(h_solutionsCPU);
-	free(h_solutionsGPU);
+	std::free(h_solutionsCPU);
+	std::free(h_solutionsGPU);
 
 	cudaDeviceReset();
 
