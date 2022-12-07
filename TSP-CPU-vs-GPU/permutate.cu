@@ -423,20 +423,53 @@ __device__ void find_ith_permutationGPU(int* sol, int* arr, int n, int index) {
 	return;
 }
 
+__device__ float calculate_length_of_permutation(float* distances, int* arr, int n, int source) {
+
+	float len = 0.0;
+	int from = 0;
+	int to = 0;
+
+	for (int i = 0; i <= n; i++) {
+		if (i == 0) {
+			// uwzglêdnienie odleg³oœci od punktu source do pierwszego
+			from = source;
+			to = arr[i];
+		}
+		else if (i == n) {
+			// uwzglêdnienie odleg³oœci od ostatniego punktu do source 
+			from = arr[n-1];
+			to = source;
+		}
+		else {
+			// pozosta³e przypadki
+			from = arr[i-1];
+			to = arr[i];
+		}
+		// dopasowanie do indeksacji w grafie
+		from--;
+		to--;
+
+		// sumowanie odleg³oœci
+		len += distances[from * (n + 1) + to];
+	}
+
+	return len;
+}
 
 
-__global__ void find_permutation_combined(int n, int sol_num, int solutions_per_thread, int *solutions) {
+__global__ void find_permutation_combined(int n, int sol_num, int solutions_per_thread, int *solutions, int *index_of_min_permutation, float *distance, float *lenth_of_min_permutation, int source) {
 	
 	// calculating id for each thread
 	int tid = threadIdx.x;
 	int offset = blockIdx.x * blockDim.x;
 	int gid = offset + tid;
-	
+
 	int start_permutation_number = gid * solutions_per_thread;
 
 	if (start_permutation_number > sol_num) {
 		return;
 	}
+
 
 	// 0-th permutation
 	int* zero_permutation = new int(n);
@@ -444,9 +477,15 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 		std::printf("Memory not allocated at: zero_permutation \t\t\t gid: %d\n", gid);
 	}
 
-	// filling up first permutation
+	// filling array with values of 0-th permutation
 	for (int i = 0; i < n; i++) {
-		zero_permutation[i] = i + 1;
+		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
+		if (i + 1 < source) {
+			zero_permutation[i] = i + 1;
+		}
+		else {
+			zero_permutation[i] = i + 2;
+		}
 	}
 	
 	// place for i-th permutation
@@ -455,23 +494,39 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 		std::printf("Memory not allocated at: ith_permutation \t\t\t gid: %d\n", gid);
 	}
 	
-
+	// znalezienie pierwszej permutacji dla danego w¹tka
 	find_ith_permutationGPU(ith_permutation, zero_permutation, n, start_permutation_number);
+	
+	// deklaracja zmiennych z indeksem oraz minimaln¹ d³ugoœci¹
+	int min_index = start_permutation_number;
+	float min_length = calculate_length_of_permutation(distance, ith_permutation, n, source);
 
-
+	// zapisanie tej permutacji do solutions
 	for (int i = 0; i < n; i++) {
 		solutions[start_permutation_number * n + i] = ith_permutation[i];
 		// printf("%d\t", ith_permutation[i]);
 	}
 
+	// zmienna do przechowywania aktualnej d³ugoœci permutacji
+	float current_length = min_length;
+
+	// szukanie wszystkich kolejnych permutacji dla tego w¹tka
 	for (int ind = 1; ind <= solutions_per_thread; ind++) {
 		next_permutationGPU(n, ith_permutation);
 		for (int i = 0; i < n; i++) {
 			solutions[start_permutation_number * n + i + n * ind] = ith_permutation[i];
 			// printf("%d\t", ith_permutation[i]);
 		}
+		// sprawdzenie czy dana permutacja jest krótsza od aktualnie najkrószej:
+		current_length = calculate_length_of_permutation(distance, ith_permutation, n, source);
+		if (current_length < min_length) {
+			min_length = current_length;
+			min_index = start_permutation_number + ind;
+		}
 	}
-
+	// zapisanie indeksu z minimalna permutacj¹
+	index_of_min_permutation[gid] = min_index;
+	lenth_of_min_permutation[gid] = min_length;
 
 	// printf("\n");	
 	
@@ -487,6 +542,7 @@ bool checkValidity(int* GPU, int* CPU, int sol_num, int n) {
 				std::printf("\nNot valid data at index : %d\n", i);
 				
 				// pokazanie kilku rozwi¹zañ z miejsca wyst¹pienia b³êdu
+				std::printf("\t\tGPU:\t\t\t\tCPU:\n");
 				for (int p = i-1 ; p < i + 5; p++) {
 					std::printf("%d\t\t", p);
 					for (int r = 0; r < n; r++) {
@@ -554,6 +610,9 @@ int main() {
 
 	int n = m - 1;
 
+	// punkt startowy 
+	int source = 3;
+
 	unsigned long long solutions_number = factorial(n);
 	// -------------------------------------------------- GRAF -----------------------------------------------
 		
@@ -606,8 +665,9 @@ int main() {
 	//   r    1	|
 	//   o    2	|
 	//   m    3	|
+	size_t distance_size = static_cast<size_t>(m * m * sizeof(float));
+	float* distance = (float*)malloc(distance_size);
 
-	float* distance = (float*)malloc(static_cast<size_t>(m * m * sizeof(float)));
 
 	// uzupe³nianie macierzy odleg³oœci from i to j
 	for (int i = 0; i < m; i++) {
@@ -624,24 +684,33 @@ int main() {
 			// zapisanie odpowiednych wartoœci
 			distance[i * m + j] = dist;
 
-			std::printf("from: %d\tto: %d\tdist: %4.2f\n", i, j, distance[i * m + j]);
+			// std::printf("from: %d\tto: %d\tdist: %4.2f\n", i, j, distance[i * m + j]);
 		}
-	}		
+	}	
 
-	// punkt startowy 
-	int source = 0;
+	// -------------------------------------------------- GRAF -----------------------------------------------
 
+	// alokacja pamiêci w GPU z grafem
+	float* distanceGPU;
+	cudaMalloc((void**)&distanceGPU, distance_size);
+	gpuErrorCheck(cudaMemcpy(distanceGPU, distance, distance_size, cudaMemcpyHostToDevice));
 
 	int* first_permutation = 0;
 
 	// obliczenie rozmiaru w bajtach tablicy pojedynczej permutacji
-	int size_in_bytes = n * sizeof(int);
+	size_t size_in_bytes = static_cast<size_t>(n * sizeof(int));
 
-	first_permutation = (int*)malloc(static_cast<size_t>(n * sizeof(int)));
+	first_permutation = (int*)malloc(size_in_bytes);
 
 	// filling array with values of 0-th permutation
 	for (int i = 0; i < n; i++) {
-		first_permutation[i] = i + 1;
+		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
+		if (i + 1 < source) {
+			first_permutation[i] = i + 1;
+		}
+		else {
+			first_permutation[i] = i + 2;
+		}
 	}
 
 	// wskaŸnik na rozwi¹zania z CPU w RAMie
@@ -666,7 +735,13 @@ int main() {
 	 	 
 	// ponowne uzupe³nienie first_permutation pierwotnym ci¹giem
 	for (int i = 0; i < n; i++) {
-		first_permutation[i] = i + 1;
+		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
+		if (i + 1 < source) {
+			first_permutation[i] = i + 1;
+		}
+		else {
+			first_permutation[i] = i + 2;
+		}
 	}
 
 	// obliczenie rozmiaru w bajtach tablicy rozwi¹zañ -> ka¿de rozwi¹zanie to n intów wiêc n * sizeof(int) * iloœæ rozwi¹zañ
@@ -708,13 +783,39 @@ int main() {
 	std::printf("block.x : %d\n", block.x);
 	std::printf("grid.x : %d\n", grid.x);
 	std::printf("solutions_per_thread : %d\n", dims.solutions_per_thread);
+	int active_threads = solutions_number / dims.solutions_per_thread;
+
+
+
+	// tablice do przechowywania indeksu permutacji dla najmniejszej œcie¿ki oraz jej d³ugoœci dla ka¿dego z threadów
+	int* index_of_min_permutation_GPU;
+	float* length_of_min_permutation_GPU;
+
+	// obliczenie rozmiarów tablic w bajtach - rozmiar = liczba potrzebnych w¹tków
+	size_t min_index_permutation_array_size = static_cast<size_t>(active_threads * sizeof(int));
+	size_t min_length_permutation_array_size = static_cast<size_t>(active_threads * sizeof(float));
+
+	// alokacja pamiêci w GPU
+	cudaMalloc((void**)&index_of_min_permutation_GPU, min_index_permutation_array_size);
+	cudaMalloc((void**)&length_of_min_permutation_GPU, min_length_permutation_array_size);
+
+	// ustawienie ka¿dego z elementów na wartoœæ INT_MAX
+	cudaMemset(index_of_min_permutation_GPU, INT_MAX, n);
+
+	// zrobienie analogicznych tablic dla CPU:
+	int* index_of_min_permutation_CPU = (int*)malloc(min_index_permutation_array_size);
+	float* length_of_min_permutation_CPU = (float*)malloc(min_length_permutation_array_size);
+
+
 
 	// timer start
 	auto GPU_start = chrono::high_resolution_clock::now();
 
 	// calling kernel
 	//find_ith_permutationGPU <<< grid, block >>> (d_solutionsGPU, first_permutationGPU, n, solutions_number);
-	find_permutation_combined <<< grid, block >>> (n, solutions_number, dims.solutions_per_thread, d_solutionsGPU);
+	find_permutation_combined <<< grid, block >>> (n, solutions_number, dims.solutions_per_thread, 
+												   d_solutionsGPU, index_of_min_permutation_GPU, 
+												   distanceGPU, length_of_min_permutation_GPU, source);
 
 	// wait till device sunc
 	gpuErrorCheck(cudaDeviceSynchronize());
@@ -724,6 +825,8 @@ int main() {
 
 	// kopiowanie obliczonych danych spowrotem do CPU
 	gpuErrorCheck(cudaMemcpy(h_solutionsGPU, d_solutionsGPU, size_in_bytes_of_solutions, cudaMemcpyDeviceToHost));
+	gpuErrorCheck(cudaMemcpy(index_of_min_permutation_CPU, index_of_min_permutation_GPU, min_index_permutation_array_size, cudaMemcpyDeviceToHost));
+	gpuErrorCheck(cudaMemcpy(length_of_min_permutation_CPU, length_of_min_permutation_GPU, min_length_permutation_array_size, cudaMemcpyDeviceToHost));
 
 
 	// ----------------------------------TO GÓWNO PONI¯EJ wed³ug mnie wczeœniej powodowa³o b³êdy--------------------------------------
@@ -737,10 +840,29 @@ int main() {
 	// ------------------------------------------------------------------------------------------------------------------------------
 
 	// filling up solutions with first permutation
-	for (int i = 1; i <= n; i++) {
-		h_solutionsGPU[i - 1] = i;
-		h_solutionsCPU[i - 1] = i;
+	for (int i = 0; i < n; i++) {
+		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
+		if (i + 1 < source) {
+			h_solutionsGPU[i] = i+1;
+			h_solutionsCPU[i] = i+1;
+		}
+		else {
+			h_solutionsGPU[i] = i+2;
+			h_solutionsCPU[i] = i+2;
+		}
 	}
+
+	// szukanie minimalnej permutacji w tym, co zrealizowa³o GPU:
+	int min_index = 0;
+	float min_length = length_of_min_permutation_CPU[0];
+	for (int i = 1; i < active_threads; i++) {
+		if (length_of_min_permutation_CPU[i] < min_length) {
+			min_index = i;
+			min_length = length_of_min_permutation_CPU[i];
+		}
+	}
+
+
 
 	/*for (int p = 0; p < solutions_number; p++) {
 		printf("%d\t\t", p);
@@ -763,7 +885,14 @@ int main() {
 	if (data_equality) std::printf("Obliczenia sa poprawne\n");
 	else std::printf("Niepoprawne obliczenia\n");
 	std::printf("CPU time:\t%lld us\n", CPU_duration.count());
-	std::printf("GPU time:\t%lld us\n", GPU_duration.count());
+	std::printf("GPU time:\t%lld us\n", GPU_duration.count()); 
+	std::printf("Najkrotsza sciezka:\t %d\t", source);
+	for (int i = 0; i < n; i++) {
+		std::printf("%d\t", h_solutionsGPU[min_index * n + i]);
+	}
+	std::printf("%d\n", source);
+	std::printf("Najkrotsza sciezka ma indeks permutacji: %d, a jej dlugosc to: %4.2f\n", min_index, min_length);
+
 
 	//zwolnienie pamiêci w GPU
 	cudaFree(first_permutationGPU);
