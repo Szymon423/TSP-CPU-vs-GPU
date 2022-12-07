@@ -428,6 +428,7 @@ __device__ float calculate_length_of_permutation(float* distances, int* arr, int
 	float len = 0.0;
 	int from = 0;
 	int to = 0;
+	int m = n + 1;
 
 	for (int i = 0; i <= n; i++) {
 		if (i == 0) {
@@ -445,12 +446,9 @@ __device__ float calculate_length_of_permutation(float* distances, int* arr, int
 			from = arr[i-1];
 			to = arr[i];
 		}
-		// dopasowanie do indeksacji w grafie
-		from--;
-		to--;
-
+		
 		// sumowanie odleg³oœci
-		len += distances[from * (n + 1) + to];
+		len += distances[from * m + to];
 	}
 
 	return len;
@@ -480,11 +478,11 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 	// filling array with values of 0-th permutation
 	for (int i = 0; i < n; i++) {
 		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
-		if (i + 1 < source) {
-			zero_permutation[i] = i + 1;
+		if (i < source) {
+			zero_permutation[i] = i;
 		}
 		else {
-			zero_permutation[i] = i + 2;
+			zero_permutation[i] = i + 1;
 		}
 	}
 	
@@ -514,6 +512,7 @@ __global__ void find_permutation_combined(int n, int sol_num, int solutions_per_
 	for (int ind = 1; ind <= solutions_per_thread; ind++) {
 		next_permutationGPU(n, ith_permutation);
 		for (int i = 0; i < n; i++) {
+			// zapisanie permutacji do globalnej pamiêci
 			solutions[start_permutation_number * n + i + n * ind] = ith_permutation[i];
 			// printf("%d\t", ith_permutation[i]);
 		}
@@ -602,11 +601,13 @@ dimensions get_dimensions(int n, int sol_num) {
 }
 
 
+
+
 // int main(int argc, char **argv) {
 int main() {
 
 	//int m = atoi(argv[1]);
-	int m = 5;
+	int m = 11;
 
 	int n = m - 1;
 
@@ -636,8 +637,8 @@ int main() {
 			point_allready_exist = false;
 
 			// losujemy wspó³rzêdne
-			x = rand() % (m + 1);
-			y = rand() % (m + 1);
+			x = rand() % (m);
+			y = rand() % (m);
 
 			// sprawdzenie, czy nie istnieje ju¿ punkt o tych wspó³rzêdnych
 			for (int j = 0; j < i; j += 2) {
@@ -705,11 +706,11 @@ int main() {
 	// filling array with values of 0-th permutation
 	for (int i = 0; i < n; i++) {
 		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
-		if (i + 1 < source) {
-			first_permutation[i] = i + 1;
+		if (i < source) {
+			first_permutation[i] = i;
 		}
 		else {
-			first_permutation[i] = i + 2;
+			first_permutation[i] = i + 1;
 		}
 	}
 
@@ -736,11 +737,11 @@ int main() {
 	// ponowne uzupe³nienie first_permutation pierwotnym ci¹giem
 	for (int i = 0; i < n; i++) {
 		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
-		if (i + 1 < source) {
-			first_permutation[i] = i + 1;
+		if (i < source) {
+			first_permutation[i] = i;
 		}
 		else {
-			first_permutation[i] = i + 2;
+			first_permutation[i] = i + 1;
 		}
 	}
 
@@ -843,21 +844,21 @@ int main() {
 	for (int i = 0; i < n; i++) {
 		// uzupe³niamy tak, ¿eby pomin¹æ Ÿród³o
 		if (i + 1 < source) {
-			h_solutionsGPU[i] = i+1;
-			h_solutionsCPU[i] = i+1;
+			h_solutionsGPU[i] = i;
+			h_solutionsCPU[i] = i;
 		}
 		else {
-			h_solutionsGPU[i] = i+2;
-			h_solutionsCPU[i] = i+2;
+			h_solutionsGPU[i] = i+1;
+			h_solutionsCPU[i] = i+1;
 		}
 	}
 
 	// szukanie minimalnej permutacji w tym, co zrealizowa³o GPU:
-	int min_index = 0;
+	int min_index = index_of_min_permutation_CPU[0];
 	float min_length = length_of_min_permutation_CPU[0];
 	for (int i = 1; i < active_threads; i++) {
 		if (length_of_min_permutation_CPU[i] < min_length) {
-			min_index = i;
+			min_index = index_of_min_permutation_CPU[i];
 			min_length = length_of_min_permutation_CPU[i];
 		}
 	}
