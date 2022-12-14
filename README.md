@@ -179,4 +179,13 @@ Tak prezentują się czasy obliczeń dla poszczególnej liczby węzłów:
     <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
 </p>
 
+## Dorzucone zostało GUI do wygodnego testowania, nie jest jeszcze idealne, ale spełnia swoją rolę
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/207473833-d9be069e-86be-4544-83ac-804ea935b6f8.png">
+</p>
+
+## Na dniach pojawi się ostateczna wersja
+SI JU SUN
+
+
 
