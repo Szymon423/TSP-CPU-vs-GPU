@@ -155,34 +155,56 @@ Pierwsza liczba w ciągu silniowym to 0, oznacza to, że jako pierwszą cyfrę d
 
 Jak widać, uzyskana permutacja jest dokładnie taka sama jak ręcznie wyznaczona wcześniej.
   
-## Obliczenia równoległe
+# Obliczenia równoległe
 
 Podejście jakie planuję przyjąć jest dwojakie:
- * każdy z wątków oblicza kolejne permutacje dla swojej grupy, która dostała permutację początkową wyliczoną na podstawie rozkładu silniowego - w jednym podejściu, możemy obliczyć wszystkie możliwe permutacje.
- * każdy i-ty wątek liczy i-tą permutację. Jednak nie mamy nieskończoność wątków, tylko jakieś 1024 * 1024 * 64 = 67 108 864 (67 baniek). Oznacza to, że na strzała będziemy mogli obliczyć nawet 11! permutacji, ponieważ 11! = 39 916 800 (39 baniek). Jednak chcąc obliczyć pozostałe permutacje, będziemy musieli wszystkie wątki ponownie zaprzęc do roboty, tak, żeby obliczyły pozostałe permutacje gdy ich łączna ilość przekracza ~67 baniek.
+ * każdy i-ty wątek liczy i-tą permutację. 
+ * każdy z wątków oblicza kolejne permutacje dla swojej grupy, która definiowana jest przez permutację początkową wyliczoną na podstawie rozkładu silniowego
 
-Na ten moment zająłem się drugą wersją, i nawet działa. Jednak jest ona dość upośledzona ponieważ nie ma adaptacyjnie dobieranych rozmiarów grid'ów i block'ów, do tego nie ma sprawdzania czy nie musimy liczyć więcej niż 1 raz za pomocą wszystkich wątków (dla permutacji powyżej 11!).
 
-Na ten moment to co działa składa się z wyznaczania i-tej iteracji za pomocą GPU. Adapatacyjnie - odpowiednio do ilości koniecznych obliczeń do wykonania uruchamiam wątki, które obliczają iterację o numerze odpowiadającym ich indeksie. Dodatkowo procesor wykonuje sekwencyjnie operacje wyznaczenia i-tej operacji. Operacje wykonywane są w jednymn i drugim miejscu w celu weryfikacji poprawności obliczeń na GPU oraz porównania czasów jakie są konieczne na wykonanie tych obliczeń.
+## i-ty wątek liczy i-tą permutację
+
+Problemem w tym podejściu jest fakt, że nie mamy nieskończoność wątków, tylko 1024 * 1024 * 64 = 67 108 864. Oznacza to, że jednorazowo będziemy mogli obliczyć nawet 11! permutacji, ponieważ 11! = 39 916 800. Chcąc obliczyć pozostałe permutacje, będziemy musieli wszystkie wątki ponownie zaprzęc do roboty, tak, żeby obliczyły pozostałe permutacje gdy ich łączna ilość przekracza ~67 milionów.
 
 ### Uzyskane rezultaty
 Niestety efekty obliczeń nie są satysfakcjonujące. GPU jest przy aktualnym algorytmie wolniejsze od CPU...
 Tak prezentują się czasy obliczeń dla poszczególnej liczby węzłów:
-<p align="center">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522830-a8f08199-d766-4063-8ca1-fb1d87e33834.png">
-</p>
- 
- Łatwiej jednak porównać wyniki na wykresach:
- 
+
 <p align="center">
     <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522892-42c28dea-0836-44b8-8a8c-3c05044dbb0c.png">
     <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
 </p>
 
+Jak widać, tego typu podejście nie jest wydajne oraz w zasadzie zrównoleglenie tego procesu w tem sposób powoduje jego spowolnienie.
+
+## i-ty wątek wyznacza grupę permutacji rozpoczynając od k-tej permutacji
+
+W tym przypadku za pomocą jednej grupy wątków, możemy obliczyć wszystkie permutacje "jednocześnie". Algorytm składa się z czterech kroków:
+* wyznaczenie pierwszej permutacji dla danego wątka za pomocą rozkładu silniowego,
+* wyznaczenie wszystkich pozostałych permutacji w kolejności leksykograficznej jakie ma wygenerować ten wątek,
+* lokalne wyznaczenie permutacji o minimalnej funkcji celu (długości),
+* globalne wyznaczenie minimum pośrud minimów lokalnych.
+
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522892-42c28dea-0836-44b8-8a8c-3c05044dbb0c.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
+</p>
+
+
+
+
 ## Dorzucone zostało GUI do wygodnego testowania, nie jest jeszcze idealne, ale spełnia swoją rolę
 <p align="center">
     <img width="1000" src="https://user-images.githubusercontent.com/96399051/207473833-d9be069e-86be-4544-83ac-804ea935b6f8.png">
 </p>
+
+
+
+
+
+
+
+
 
 ## Na dniach pojawi się ostateczna wersja
 SI JU SUN
