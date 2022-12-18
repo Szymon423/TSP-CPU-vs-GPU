@@ -7,7 +7,7 @@ Na ten moment mam znaleziony działający algorytm, który oblicza wszystkie mo�
 
 <a href="https://www.codeproject.com/Articles/380399/Permutations-with-CUDA-and-OpenCL#cudahttps://www.quickperm.org/01example.php#menu">Link do znalezionego kodu, który liczy do max 12!<a/>
 
-## Progress - mój własny program
+## Moje podejście
 Staram się też jednak samemu napisać od podstaw taki algorytm, który zadziała na CUDA. W tym jednak pojawia się problem, bo mając klasyczne algorytmy wyznaczające wszystkie permutacje trochę ciężko wyznaczyć drogę, która pozwoli na zrównoleglenie obliczeń - a w zasadzie ja tego nie potafię zrobić. Rekurencja jest trudna w zrównolegleniu więc też odpada. Z tego powodu odrzuciłem kilka algorytmów:
  * prosty algorytm z rekurencją - zagnieżdżone n pętli
  * algorytm Heaps'a oraz QuickPerm są efektywne, jednak podczas działania nie widzę możliwości sensownego zrównoleglenia - nie zwracają wyników w leksykograficznej kolejności
@@ -15,11 +15,11 @@ Staram się też jednak samemu napisać od podstaw taki algorytm, który zadzia�
 Właśnie dwa ostatnie słowa to według mnie klucz do obliczeń równoległych.
 
 ## Kolejność leksykograficzna
-Jeśli będziemy generować wszystkie możliwe permutacje w takiej właśnie kolejności zaczynając od najmniejszej oraz najbardziej intuicyjnej permutacji początkowej, którą będzie {1, 2, 3, ..., n}, wówczas mamy pewność, że wygenerujemy wszystkie możliwe permutacje realizując je po kolei aż do ostatniej, którą jest inwersja permutacji początkowej: {n, n-1, n-2, ..., 1}.
+Jeśli będziemy generować wszystkie możliwe permutacje w takiej właśnie kolejności zaczynając od najmniejszej oraz najbardziej intuicyjnej permutacji początkowej, którą będzie {1, 2, 3, ..., n}, wówczas mamy pewność, że wygenerujemy wszystkie możliwe permutacje realizując je po kolei aż do ostatniej, którą jest inwersją permutacji początkowej: {n, n-1, n-2, ..., 1}.
 
 ### Wszystko fajnie, tylko jak generować permutacje w kolejności leksykograficznej?
 
-Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z wszystkich możliwych następnych permutacji. Przykład dla 3 elementów, 3! = 6. 
+Ważne jest to, że leksykograficznie w naszym przypadku oznacza po prostu rosnąco, czyli tak jakbyśmy posortowali wyniki dla jakiegoś algorytmu, tak żeby liczba tworząca następną permutację była najmniejszą z wszystkich możliwych następnych permutacji. Przykład dla 3 elementów, 3! = 6. 
 <div align="center">
 <table>
   <tr>
@@ -36,7 +36,7 @@ Ważne jest jeszcze to, że leksykograficznie w naszym przypadku oznacza po pros
 
 Znalazłem gościa, który bardzo fajnie wyjaśnił o co biega na <a href="https://www.youtube.com/watch?v=6qXO72FkqwM">tym filmiku na YT</a> ale postaram się wyjaśnić to też tutaj.
 
-### Wyznaczanie kolejności leksykograficznej
+### Wyznaczanie następnej permutacji w kolejności leksykograficznej
   
 Wyznaczmy następną permutację dla n = 7 elementowej tablicy: {3, 2, 6, 7, 5, 4, 1}.
 Indeksując kazdy element od 0 do n-1, możemy przedstawić tę tablicę za pomocą prostego wykresu:
@@ -122,10 +122,15 @@ Na początek zrobimy to ręcznie:
 </div>
 
 Zapiszmy teraz numer permutacji którą chcemy uzyskać w reprezentacji silniowej.
-<p align="center">
-    <img width="350" src="https://user-images.githubusercontent.com/96399051/204923629-fed2c10c-3923-4da0-83cd-afe7c4d6290a.png">
-</p>
-
+<div align="center">
+<table>
+  <tr> <td>Dzielna</td> <td>Dzielnik</td> <td>Reszta z dzielenia</td> 
+  <tr> <td>4</td> <td>1</td> <td>0</td>
+  <tr> <td>4</td> <td>2</td> <td>0</td> 
+  <tr> <td>3</td> <td>3</td> <td>2</td> 
+</table>
+</div>  
+ 
 Wiemy teraz, że reprezentacja silniowa liczby 4 wynosi:
 <div align="center">
 <table>
@@ -171,8 +176,8 @@ Niestety efekty obliczeń nie są satysfakcjonujące. GPU jest przy aktualnym al
 Tak prezentują się czasy obliczeń dla poszczególnej liczby węzłów:
 
 <p align="center">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522892-42c28dea-0836-44b8-8a8c-3c05044dbb0c.png">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208318092-9823d520-fc3e-4734-af4b-48c3f1489524.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208318205-a867f0ab-73e0-4861-8bbe-2276d744a887.png">
 </p>
 
 Jak widać, tego typu podejście nie jest wydajne oraz w zasadzie zrównoleglenie tego procesu w tem sposób powoduje jego spowolnienie.
@@ -186,28 +191,32 @@ W tym przypadku za pomocą jednej grupy wątków, możemy obliczyć wszystkie pe
 * globalne wyznaczenie minimum pośrud minimów lokalnych.
 
 <p align="center">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522892-42c28dea-0836-44b8-8a8c-3c05044dbb0c.png">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/205522898-b0b6440f-f338-40ab-aa0f-e620c4b28628.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208317588-86cd23be-c233-4be0-a7af-d833771c6a10.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208317681-19da3fb0-612a-4e65-955d-b586a685dea3.png">
 </p>
+
+
+Jak widać w tym przypadku rezultaty są dużo lepsze. W najlepszym przypadku uzyskane przyspieszenie obliczeń skraca ich czas 24 krotnie.  
+
+
 
 
 
 
 ## Dorzucone zostało GUI do wygodnego testowania, nie jest jeszcze idealne, ale spełnia swoją rolę
+
 <p align="center">
-    <img width="1000" src="https://user-images.githubusercontent.com/96399051/207473833-d9be069e-86be-4544-83ac-804ea935b6f8.png">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208317817-66b7c8d2-a4ee-4126-94d5-c527c265b97d.png">
 </p>
-
-
-
-
-
-
-
-
-
-## Na dniach pojawi się ostateczna wersja
-SI JU SUN
-
-
-
+  
+Jak widać powyżej, możemy wybrać liczbę miast do odwiedzenia (m), oraz na tej podstawie wylosować mapę miast. Położenie konkretnego punktu na mapie jest wybierane jako punkt o współrzędnych okreslonych jako liczba całkowita z zakresu od o do m.
+  
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208317840-e700e94e-857f-4a83-96b0-9a76088a1c74.png">
+</p>
+  
+Na podstawie wygenerowanej mapy oraz punktu startowego możemy rozpocząć obliczenia, których rezultat pokazywany jest w formie ścieżki łączącej poszczególne miasta oraz dodatkowo wyświetlana jest informacja o czasach obliczeń dla GPU oraz CPU wraz ze współczynnikiem przyspieszenia.
+ 
+<p align="center">
+    <img width="1000" src="https://user-images.githubusercontent.com/96399051/208317865-b56051c7-7d03-4f8d-97e7-bc62c2e5e6f4.png">
+</p>
