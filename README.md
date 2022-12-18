@@ -91,9 +91,19 @@ Zeby zrozumieć o co chodzi chcę przywołać analogię do systemu dziesiętnego
 </p>
 
 W przypadku systemu silniowego bazą zapisu jest silnia. Liczbę z systemu dziesiętnego możemy przenieść do systemu silniowego realizując operację rozkładu za pomocą dzielenia z resztą. Dla przykładu rozważmy znów 123:
-<p align="center">
-    <img width="350" src="https://user-images.githubusercontent.com/96399051/204921271-e0923c85-2c2c-4fa0-b1fc-b12d09e9a266.png">
-</p>
+
+<div align="center">
+<table>
+  <tr> <td>Dzielna</td> <td>Dzielnik</td> <td>Reszta z dzielenia</td> 
+  <tr> <td>123</td> <td>1</td> <td>0</td>
+  <tr> <td>123</td> <td>2</td> <td>1</td> 
+  <tr> <td>61</td> <td>3</td> <td>1</td> 
+  <tr> <td>20</td> <td>4</td> <td>0</td>
+  <tr> <td>5</td> <td>5</td> <td>0</td> 
+  <tr> <td>1</td> <td>6</td> <td>1</td> 
+</table>
+</div>  
+
 Wykonane operacje:
   
 1. W pierwszym kroku dzielimy liczbę 123 przez 1, efektem tego jest liczba 123 oraz 0 reszty,
