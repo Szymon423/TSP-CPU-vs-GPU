@@ -22,8 +22,6 @@ public:
     QScatterSeries* src;
     QChart* chart;
 
-    // virtual void paintEvent(QPaintEvent *event, QString);
-
 private:
     Ui::TSPGUItestClass ui;
 
