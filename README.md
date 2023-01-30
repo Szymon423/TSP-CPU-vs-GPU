@@ -208,11 +208,6 @@ W tym przypadku za pomocą jednej grupy wątków, możemy obliczyć wszystkie pe
 
 Jak widać w tym przypadku rezultaty są dużo lepsze. W najlepszym przypadku uzyskane przyspieszenie obliczeń skraca ich czas 24 krotnie.  
 
-
-
-
-
-
 ## Dorzucone zostało GUI do wygodnego testowania, nie jest jeszcze idealne, ale spełnia swoją rolę
 
 <p align="center">
